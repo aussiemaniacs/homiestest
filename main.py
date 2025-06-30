@@ -43,6 +43,9 @@ def list_categories():
         ('Search Movies', 'search_movies', 'DefaultSearch.png'),
         ('Search TV Shows', 'search_tv', 'DefaultSearch.png'),
         ('GitHub Collection', 'github_collection', 'DefaultFolder.png'),
+        ('Streaming Providers', 'streaming_providers', 'DefaultNetwork.png'),
+        ('Subtitle Manager', 'subtitle_manager', 'DefaultSubtitles.png'),
+        ('Tools', 'tools', 'DefaultAddonProgram.png'),
         ('Settings', 'settings', 'DefaultAddonProgram.png')
     ]
     
