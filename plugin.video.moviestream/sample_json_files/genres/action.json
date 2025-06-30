@@ -1,0 +1,10 @@
+[
+  {
+    "id": "movie_003",
+    "title": "Sintel",
+    "year": 2010,
+    "subgenres": ["Adventure", "Fantasy"],
+    "action_rating": 8.0,
+    "action_elements": ["sword fighting", "dragon scenes", "chase sequences"]
+  }
+]
