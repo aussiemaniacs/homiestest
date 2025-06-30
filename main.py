@@ -13,6 +13,9 @@ import json
 from resources.lib.tmdb_client import TMDBClient
 from resources.lib.github_client import GitHubClient
 from resources.lib.video_player import VideoPlayer
+from resources.lib.torrent_client import TorrentClient
+from resources.lib.subtitle_client import SubtitleClient
+from resources.lib.streaming_providers import StreamingProviders
 
 # Get addon info
 addon = xbmcaddon.Addon()
