@@ -1,0 +1,26 @@
+[
+  {
+    "id": "movie_001",
+    "title": "Big Buck Bunny",
+    "year": 2008,
+    "animation_style": "3D Computer Animation",
+    "animation_studio": "Blender Institute",
+    "target_audience": "Family"
+  },
+  {
+    "id": "movie_002",
+    "title": "Elephant's Dream", 
+    "year": 2006,
+    "animation_style": "3D Computer Animation",
+    "animation_studio": "Orange Open Movie Project",
+    "target_audience": "Art House"
+  },
+  {
+    "id": "movie_003",
+    "title": "Sintel",
+    "year": 2010,
+    "animation_style": "3D Computer Animation", 
+    "animation_studio": "Blender Institute",
+    "target_audience": "General"
+  }
+]

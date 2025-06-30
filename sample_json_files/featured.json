@@ -1,0 +1,32 @@
+{
+  "featured_movies": [
+    {
+      "id": "movie_001",
+      "title": "Big Buck Bunny",
+      "featured_reason": "Editor's Pick - Classic Animation",
+      "featured_date": "2024-01-15"
+    },
+    {
+      "id": "movie_003", 
+      "title": "Sintel",
+      "featured_reason": "Trending Now - Award Winner",
+      "featured_date": "2024-01-20"
+    }
+  ],
+  "featured_shows": [
+    {
+      "id": "show_001",
+      "title": "Sample Animation Series",
+      "featured_reason": "Staff Favorite - Must Watch",
+      "featured_date": "2024-01-18"
+    }
+  ],
+  "hero_content": {
+    "id": "movie_003",
+    "title": "Sintel", 
+    "type": "movie",
+    "description": "Experience the epic adventure of a young warrior and her dragon companion in this stunning animated masterpiece.",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    "backdrop_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_trailer_400p.png"
+  }
+}

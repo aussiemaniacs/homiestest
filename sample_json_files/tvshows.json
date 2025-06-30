@@ -1,0 +1,62 @@
+[
+  {
+    "id": "show_001",
+    "title": "Sample Animation Series",
+    "first_air_date": "2008-01-01",
+    "genre": "Animation, Adventure, Comedy",
+    "rating": 8.5,
+    "plot": "A collection of animated shorts featuring various characters and stories.",
+    "creator": "Animation Studio",
+    "cast": ["Voice Actor One", "Voice Actor Two", "Voice Actor Three"],
+    "poster_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+    "backdrop_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+    "tmdb_id": 99999,
+    "seasons": [
+      {
+        "season_number": 1,
+        "episode_count": 3,
+        "episodes": [
+          {
+            "episode_number": 1,
+            "title": "Big Buck Bunny",
+            "plot": "A large and lovable rabbit deals with three tiny bullies.",
+            "runtime": 10,
+            "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "subtitles": [
+              {
+                "language": "en",
+                "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+              }
+            ]
+          },
+          {
+            "episode_number": 2,
+            "title": "Elephant's Dream", 
+            "plot": "Two men exploring a strange industrial world.",
+            "runtime": 11,
+            "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            "subtitles": [
+              {
+                "language": "en",
+                "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+              }
+            ]
+          },
+          {
+            "episode_number": 3,
+            "title": "Sintel",
+            "plot": "A lonely young woman helps and befriends a dragon.",
+            "runtime": 15,
+            "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+            "subtitles": [
+              {
+                "language": "en", 
+                "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

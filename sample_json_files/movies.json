@@ -1,0 +1,77 @@
+[
+  {
+    "id": "movie_001",
+    "title": "Big Buck Bunny",
+    "year": 2008,
+    "genre": "Animation, Comedy, Short",
+    "rating": 8.2,
+    "plot": "A large and lovable rabbit deals with three tiny bullies, led by a flying squirrel, who are determined to squelch his happiness.",
+    "director": "Sacha Goedegebure",
+    "cast": ["Frank Dorrestein", "Maurits Delchot", "Jan Morgenstern"],
+    "runtime": 10,
+    "poster_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+    "backdrop_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    "trailer_url": "https://www.youtube.com/watch?v=YE7VzlLtp-4",
+    "subtitles": [
+      {
+        "language": "en",
+        "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+      }
+    ],
+    "quality": "720p",
+    "file_size": "158MB",
+    "added_date": "2024-01-15",
+    "tmdb_id": 10378
+  },
+  {
+    "id": "movie_002", 
+    "title": "Elephant's Dream",
+    "year": 2006,
+    "genre": "Animation, Science Fiction, Short",
+    "rating": 7.3,
+    "plot": "Emo and Proog are two men exploring a strange industrial world. The older and apparently more experienced Proog acts as a guide for Emo, leading him through dangerous, shifting mechanical environments.",
+    "director": "Bassam Kurdali",
+    "cast": ["Tygo Gernandt", "Cas Jansen"],
+    "runtime": 11,
+    "poster_url": "https://orange.blender.org/wp-content/themes/orange/images/media/gallery/s5_proog.jpg",
+    "backdrop_url": "https://orange.blender.org/wp-content/themes/orange/images/media/gallery/s5_proog.jpg", 
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    "trailer_url": "https://www.youtube.com/watch?v=TLkA0RELQ1g",
+    "subtitles": [
+      {
+        "language": "en",
+        "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+      }
+    ],
+    "quality": "480p",
+    "file_size": "53MB", 
+    "added_date": "2024-01-16",
+    "tmdb_id": 2062
+  },
+  {
+    "id": "movie_003",
+    "title": "Sintel",
+    "year": 2010,
+    "genre": "Animation, Adventure, Fantasy, Short",
+    "rating": 8.0,
+    "plot": "A lonely young woman, Sintel, helps and befriends a dragon, whom she calls Scales. But when he is kidnapped by an adult dragon, Sintel decides to embark on a dangerous quest to find her lost friend Scales.",
+    "director": "Colin Levy",
+    "cast": ["Halina Reijn", "Thom Hoffman"],
+    "runtime": 15,
+    "poster_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_trailer_400p.png",
+    "backdrop_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_trailer_400p.png",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4", 
+    "trailer_url": "https://www.youtube.com/watch?v=eRsGyueVLvQ",
+    "subtitles": [
+      {
+        "language": "en",
+        "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+      }
+    ],
+    "quality": "1080p",
+    "file_size": "347MB",
+    "added_date": "2024-01-17", 
+    "tmdb_id": 45745
+  }
+]
