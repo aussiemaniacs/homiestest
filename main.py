@@ -555,6 +555,10 @@ def generate_sample_db():
     except Exception as e:
         xbmcgui.Dialog().ok('Generation Error', f'Error generating sample database:\n\n{str(e)}')
 
+def open_settings():
+    """Open addon settings"""
+    addon.openSettings()
+
 def router(paramstring):
     """Route to the appropriate function based on the provided paramstring"""
     # Parse parameters
