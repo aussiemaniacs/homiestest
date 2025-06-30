@@ -584,8 +584,6 @@ def router(paramstring):
             github_collection()
         elif action == 'play_github_movie':
             play_github_movie(params.get('movie_data'))
-        elif action == 'settings':
-            open_settings()
         elif action == 'streaming_providers':
             streaming_providers()
         elif action == 'subtitle_manager':
@@ -602,6 +600,8 @@ def router(paramstring):
             addon_info()
         elif action == 'generate_sample_db':
             generate_sample_db()
+        elif action == 'settings':
+            open_settings()
         else:
             list_categories()
     else:
