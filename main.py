@@ -586,6 +586,22 @@ def router(paramstring):
             play_github_movie(params.get('movie_data'))
         elif action == 'settings':
             open_settings()
+        elif action == 'streaming_providers':
+            streaming_providers()
+        elif action == 'subtitle_manager':
+            subtitle_manager()
+        elif action == 'tools':
+            tools()
+        elif action == 'test_tmdb':
+            test_tmdb()
+        elif action == 'test_github':
+            test_github()
+        elif action == 'clear_all_cache':
+            clear_all_cache()
+        elif action == 'addon_info':
+            addon_info()
+        elif action == 'generate_sample_db':
+            generate_sample_db()
         else:
             list_categories()
     else:
