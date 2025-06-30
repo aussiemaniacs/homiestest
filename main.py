@@ -361,19 +361,22 @@ def play_github_movie(movie_data):
         xbmc.log(f"MovieStream: Error playing GitHub movie: {str(e)}", xbmc.LOGERROR)
 
 def get_video_url_for_movie(movie_details):
-    """Get video URL for a movie (placeholder implementation)"""
-    # This is where you would implement your video source logic
-    # For now, returning a sample URL
+    """Get video URL for a movie using multiple providers"""
+    
+    # Initialize streaming providers
+    providers = StreamingProviders()
+    
+    # Try to get video URL from providers
+    video_url = providers.get_video_url(movie_details)
+    
+    if video_url:
+        return video_url
+    
+    # Fallback to sample URLs for demo
     title = movie_details.get('title', '').replace(' ', '+')
     year = movie_details.get('release_date', '')[:4] if movie_details.get('release_date') else ''
     
-    # You can implement various video sources here:
-    # - Direct video file URLs
-    # - Streaming service integration
-    # - Torrent streaming
-    # - Custom video providers
-    
-    # Sample implementation (replace with your actual video sources)
+    # Sample URLs for demonstration
     sample_urls = [
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
         "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
