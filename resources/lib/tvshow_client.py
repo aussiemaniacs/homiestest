@@ -10,7 +10,6 @@ import xbmc
 import xbmcaddon
 import requests
 import json
-from resources.lib.cocoscrapers_client import CocoScrapersClient
 
 class TVShowClient:
     """Client for TV show management"""
@@ -20,7 +19,14 @@ class TVShowClient:
         self.api_key = self.addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
         self.base_url = 'https://api.themoviedb.org/3'
         self.session = requests.Session()
-        self.cocoscrapers = CocoScrapersClient()
+        
+        # Import cocoscrapers client
+        try:
+            from resources.lib.cocoscrapers_client import CocoScrapersClient
+            self.cocoscrapers = CocoScrapersClient()
+        except ImportError:
+            self.cocoscrapers = None
+            xbmc.log("MovieStream: Cocoscrapers client not available in TVShowClient", xbmc.LOGWARNING)
         
         # Set user agent
         self.session.headers.update({
@@ -117,12 +123,15 @@ class TVShowClient:
     
     def scrape_episode_sources(self, show_title, year, season, episode, show_id=None):
         """Scrape episode sources using Cocoscrapers"""
-        if not self.cocoscrapers.is_available():
+        if not self.cocoscrapers or not self.cocoscrapers.is_available():
+            xbmc.log("MovieStream: Cocoscrapers not available for episode scraping", xbmc.LOGWARNING)
             return []
         
         try:
             # Get external IDs for better scraping
-            external_ids = self.get_show_external_ids(show_id) if show_id else {}
+            external_ids = {}
+            if show_id:
+                external_ids = self.get_show_external_ids(show_id) or {}
             
             # Scrape sources
             sources = self.cocoscrapers.scrape_episode_sources(
