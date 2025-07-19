@@ -1,0 +1,192 @@
+# XBMC Media Center language file
+# Addon Name: MovieStream Pro
+# Addon id: plugin.video.moviestream
+
+msgid ""
+msgstr ""
+"Language: en_GB\
+"
+"MIME-Version: 1.0\
+"
+"Content-Type: text/plain; charset=UTF-8\
+"
+
+msgctxt "#32001"
+msgid "API Settings"
+msgstr ""
+
+msgctxt "#32002"
+msgid "TMDB API Key"
+msgstr ""
+
+msgctxt "#32003"
+msgid "GitHub Repository URL"
+msgstr ""
+
+msgctxt "#32004"
+msgid "Enable GitHub Sync"
+msgstr ""
+
+msgctxt "#32005"
+msgid "Auto Update Metadata"
+msgstr ""
+
+msgctxt "#32006"
+msgid "Enable Trakt Integration"
+msgstr ""
+
+msgctxt "#32010"
+msgid "Playback Settings"
+msgstr ""
+
+msgctxt "#32011"
+msgid "Preferred Video Quality"
+msgstr ""
+
+msgctxt "#32012"
+msgid "Subtitle Language"
+msgstr ""
+
+msgctxt "#32013"
+msgid "Enable Subtitles"
+msgstr ""
+
+msgctxt "#32014"
+msgid "Buffer Size (MB)"
+msgstr ""
+
+msgctxt "#32015"
+msgid "Auto-play Next Episode"
+msgstr ""
+
+msgctxt "#32020"
+msgid "Cache Settings"
+msgstr ""
+
+msgctxt "#32021"
+msgid "Cache Metadata"
+msgstr ""
+
+msgctxt "#32022"
+msgid "Cache Duration (hours)"
+msgstr ""
+
+msgctxt "#32023"
+msgid "Clear Cache"
+msgstr ""
+
+msgctxt "#32025"
+msgid "Cache Sources"
+msgstr ""
+
+msgctxt "#32026"
+msgid "Clear Watchlist"
+msgstr ""
+
+msgctxt "#32030"
+msgid "Cocoscrapers Settings"
+msgstr ""
+
+msgctxt "#32031"
+msgid "Enable Cocoscrapers"
+msgstr ""
+
+msgctxt "#32032"
+msgid "Auto-play Best Source"
+msgstr ""
+
+msgctxt "#32033"
+msgid "Maximum Sources"
+msgstr ""
+
+msgctxt "#32034"
+msgid "Quality Filter"
+msgstr ""
+
+msgctxt "#32035"
+msgid "Scraper Timeout (seconds)"
+msgstr ""
+
+msgctxt "#32036"
+msgid "Enable Torrent Scrapers"
+msgstr ""
+
+msgctxt "#32040"
+msgid "Debrid Services"
+msgstr ""
+
+msgctxt "#32041"
+msgid "Enable Real-Debrid"
+msgstr ""
+
+msgctxt "#32042"
+msgid "Real-Debrid API Key"
+msgstr ""
+
+msgctxt "#32043"
+msgid "Enable Premiumize"
+msgstr ""
+
+msgctxt "#32044"
+msgid "Premiumize API Key"
+msgstr ""
+
+msgctxt "#32045"
+msgid "Enable All-Debrid"
+msgstr ""
+
+msgctxt "#32046"
+msgid "All-Debrid API Key"
+msgstr ""
+
+msgctxt "#32047"
+msgid "Debrid Priority Service"
+msgstr ""
+
+msgctxt "#32050"
+msgid "Interface Settings"
+msgstr ""
+
+msgctxt "#32051"
+msgid "Enable Fanart"
+msgstr ""
+
+msgctxt "#32052"
+msgid "Show Plot Descriptions"
+msgstr ""
+
+msgctxt "#32053"
+msgid "Show Ratings"
+msgstr ""
+
+msgctxt "#32054"
+msgid "Items Per Page"
+msgstr ""
+
+msgctxt "#32055"
+msgid "Enable Context Menus"
+msgstr ""
+
+msgctxt "#32056"
+msgid "Default View Mode"
+msgstr ""
+
+msgctxt "#32060"
+msgid "Watchlist Settings"
+msgstr ""
+
+msgctxt "#32061"
+msgid "Enable Watchlist"
+msgstr ""
+
+msgctxt "#32062"
+msgid "Sync Watchlist to Cloud"
+msgstr ""
+
+msgctxt "#32063"
+msgid "Auto-remove Watched Items"
+msgstr ""
+
+msgctxt "#32064"
+msgid "Mark Watched at (%)"
+msgstr ""
