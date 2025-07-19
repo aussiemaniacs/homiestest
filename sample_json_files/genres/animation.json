@@ -1,0 +1,26 @@
+[
+  {
+    "id": "movie_001",
+    "title": "Big Buck Bunny",
+    "year": 2008,
+    "subgenres": ["Comedy", "Family"],
+    "animation_style": "3D Computer Animation",
+    "target_audience": "all ages"
+  },
+  {
+    "id": "movie_002",
+    "title": "Elephant's Dream",
+    "year": 2006,
+    "subgenres": ["Drama", "Fantasy"],
+    "animation_style": "3D Computer Animation",
+    "target_audience": "mature"
+  },
+  {
+    "id": "movie_003",
+    "title": "Sintel",
+    "year": 2010,
+    "subgenres": ["Adventure", "Fantasy"],
+    "animation_style": "3D Computer Animation",
+    "target_audience": "teens and adults"
+  }
+]
