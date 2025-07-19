@@ -554,7 +554,7 @@ def search_tv_shows():
 
 # PLAYBACK FUNCTIONS
 def play_movie(movie_data_str):
-    """Play a movie"""
+    """Play a movie with proper cocoscrapers integration"""
     try:
         movie_data = json.loads(movie_data_str)
         
@@ -569,43 +569,86 @@ def play_movie(movie_data_str):
             if not choice:  # Start over
                 watchlist_manager.remove_resume_point(movie_data)
         
-        # Try Cocoscrapers first
+        # Get enhanced TMDB info if available
+        tmdb_id = movie_data.get('tmdb_id')
+        imdb_id = movie_data.get('imdb_id')
+        
+        # If we have TMDB ID, get more details
+        if tmdb_id:
+            try:
+                movie_details = get_enhanced_tmdb_details(tmdb_id, 'movie')
+                if movie_details:
+                    # Update movie data with enhanced info
+                    movie_data.update(movie_details)
+                    imdb_id = movie_details.get('imdb_id') or imdb_id
+            except Exception as e:
+                xbmc.log(f"MovieStream: Error getting enhanced TMDB details: {str(e)}", xbmc.LOGERROR)
+        
+        # Try Cocoscrapers with enhanced data
+        sources_found = False
         if cocoscrapers_client.is_available() and addon.getSettingBool('enable_cocoscrapers'):
+            xbmc.log(f"MovieStream: Attempting to scrape sources for {movie_data['title']}", xbmc.LOGINFO)
+            
             sources = cocoscrapers_client.scrape_movie_sources(
                 title=movie_data['title'],
-                year=movie_data['year'],
-                tmdb_id=movie_data.get('tmdb_id'),
-                imdb_id=movie_data.get('imdb_id')
+                year=movie_data.get('year', ''),
+                tmdb_id=tmdb_id,
+                imdb_id=imdb_id
             )
             
-            # Filter with debrid services
+            # Filter with debrid services if available
             if debrid_client.is_available():
                 sources = debrid_client.filter_debrid_sources(sources)
             
             if sources:
+                sources_found = True
+                xbmc.log(f"MovieStream: Found {len(sources)} sources", xbmc.LOGINFO)
+                
                 # Auto-play or show selection
-                if addon.getSettingBool('auto_play_best_source'):
+                selected_source = None
+                if addon.getSettingBool('auto_play_best_source') and len(sources) > 0:
                     selected_source = sources[0]
+                    xbmc.log(f"MovieStream: Auto-playing best source: {selected_source.get('provider', 'Unknown')}", xbmc.LOGINFO)
                 else:
                     selected_source = cocoscrapers_client.show_source_selection(sources, movie_data['title'])
                 
                 if selected_source:
+                    # Resolve the source
                     resolved_url = cocoscrapers_client.resolve_source(selected_source)
                     
                     if resolved_url:
+                        xbmc.log(f"MovieStream: Playing resolved URL for {movie_data['title']}", xbmc.LOGINFO)
                         # Play resolved URL
                         play_resolved_url(resolved_url, movie_data, resume_point)
                         return
+                    else:
+                        xbmc.log(f"MovieStream: Failed to resolve source for {movie_data['title']}", xbmc.LOGERROR)
         
-        # Fallback to sample
-        play_sample_video()
+        # If cocoscrapers failed or no sources found
+        if not sources_found:
+            xbmc.log(f"MovieStream: No sources found via cocoscrapers for {movie_data['title']}", xbmc.LOGWARNING)
+            
+            # Try direct video URL from movie data
+            video_url = movie_data.get('video_url')
+            if video_url:
+                xbmc.log(f"MovieStream: Using direct video URL for {movie_data['title']}", xbmc.LOGINFO)
+                play_resolved_url(video_url, movie_data, resume_point)
+                return
+            
+            # Last resort: notify user
+            xbmcgui.Dialog().notification(
+                'MovieStream', 
+                f'No sources found for {movie_data["title"]}', 
+                xbmcgui.NOTIFICATION_WARNING,
+                5000
+            )
         
     except Exception as e:
         xbmc.log(f"MovieStream: Error playing movie: {str(e)}", xbmc.LOGERROR)
-        play_sample_video()
+        xbmcgui.Dialog().notification('MovieStream', 'Playback error occurred', xbmcgui.NOTIFICATION_ERROR)
 
 def play_episode(episode_data_str):
-    """Play a TV episode"""
+    """Play a TV episode with proper cocoscrapers integration"""
     try:
         episode_data = json.loads(episode_data_str)
         
@@ -620,27 +663,35 @@ def play_episode(episode_data_str):
             if not choice:
                 watchlist_manager.remove_resume_point(episode_data)
         
+        # Get enhanced show info
+        show_tmdb_id = episode_data.get('show_tmdb_id')
+        
         # Try Cocoscrapers
+        sources_found = False
         if cocoscrapers_client.is_available() and addon.getSettingBool('enable_cocoscrapers'):
+            xbmc.log(f"MovieStream: Attempting to scrape episode sources for {episode_data.get('show_title', '')} S{episode_data.get('season')}E{episode_data.get('episode')}", xbmc.LOGINFO)
+            
             sources = tvshow_client.scrape_episode_sources(
-                show_title=episode_data['show_title'],
+                show_title=episode_data.get('show_title', ''),
                 year=episode_data.get('year', ''),
-                season=episode_data['season'],
-                episode=episode_data['episode'],
-                show_id=episode_data.get('show_tmdb_id')
+                season=episode_data.get('season'),
+                episode=episode_data.get('episode'),
+                show_id=show_tmdb_id
             )
             
             if debrid_client.is_available():
                 sources = debrid_client.filter_debrid_sources(sources)
             
             if sources:
-                if addon.getSettingBool('auto_play_best_source'):
+                sources_found = True
+                xbmc.log(f"MovieStream: Found {len(sources)} episode sources", xbmc.LOGINFO)
+                
+                selected_source = None
+                if addon.getSettingBool('auto_play_best_source') and len(sources) > 0:
                     selected_source = sources[0]
                 else:
-                    selected_source = cocoscrapers_client.show_source_selection(
-                        sources, 
-                        f"{episode_data['show_title']} S{episode_data['season']}E{episode_data['episode']}"
-                    )
+                    episode_title = f"{episode_data.get('show_title', '')} S{episode_data.get('season')}E{episode_data.get('episode')}"
+                    selected_source = cocoscrapers_client.show_source_selection(sources, episode_title)
                 
                 if selected_source:
                     resolved_url = cocoscrapers_client.resolve_source(selected_source)
@@ -649,91 +700,52 @@ def play_episode(episode_data_str):
                         play_resolved_url(resolved_url, episode_data, resume_point)
                         return
         
-        # Fallback
-        play_sample_video()
+        # If no sources found
+        if not sources_found:
+            # Try direct video URL
+            video_url = episode_data.get('video_url')
+            if video_url:
+                play_resolved_url(video_url, episode_data, resume_point)
+                return
+            
+            # Notify user
+            episode_title = f"{episode_data.get('show_title', 'Unknown')} S{episode_data.get('season')}E{episode_data.get('episode')}"
+            xbmcgui.Dialog().notification(
+                'MovieStream', 
+                f'No sources found for {episode_title}', 
+                xbmcgui.NOTIFICATION_WARNING,
+                5000
+            )
         
     except Exception as e:
         xbmc.log(f"MovieStream: Error playing episode: {str(e)}", xbmc.LOGERROR)
-        play_sample_video()
+        xbmcgui.Dialog().notification('MovieStream', 'Playback error occurred', xbmc.NOTIFICATION_ERROR)
 
-def play_resolved_url(url, item_data, resume_point=None):
-    """Play a resolved URL with metadata"""
-    try:
-        list_item = xbmcgui.ListItem(label=item_data.get('title', 'Unknown'), path=url)
-        
-        # Set info
-        list_item.setInfo('video', {
-            'title': item_data.get('title', 'Unknown'),
-            'plot': item_data.get('plot', ''),
-            'year': int(item_data.get('year', 0)) if str(item_data.get('year', '')).isdigit() else 0,
-            'mediatype': item_data.get('type', 'video')
-        })
-        
-        # Set artwork
-        if item_data.get('poster_url'):
-            list_item.setArt({'thumb': item_data['poster_url']})
-        
-        # Set resume point
-        if resume_point:
-            list_item.setProperty('ResumeTime', str(resume_point['position']))
-            list_item.setProperty('TotalTime', str(resume_point['total_time']))
-        
-        # Add to history
-        watchlist_manager.add_to_history(item_data)
-        
-        xbmcplugin.setResolvedUrl(plugin_handle, True, list_item)
-        
-    except Exception as e:
-        xbmc.log(f"MovieStream: Error playing resolved URL: {str(e)}", xbmc.LOGERROR)
-
-def play_sample_video():
-    """Play sample video as fallback"""
-    sample_url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-    list_item = xbmcgui.ListItem(path=sample_url)
-    xbmcplugin.setResolvedUrl(plugin_handle, True, list_item)
-
-# TOOLS MENU
-def tools_menu():
-    """Tools submenu"""
-    xbmcplugin.setPluginCategory(plugin_handle, '⚙️ Tools')
-    
-    menu_items = [
-        ('🔍 Test TMDB Connection', 'test_tmdb', ''),
-        ('📁 Test GitHub Connection', 'test_github', ''),
-        ('🎬 Cocoscrapers Status', 'cocoscrapers_status', ''),
-        ('💎 Debrid Account Status', 'debrid_status', ''),
-        ('📊 Addon Statistics', 'addon_stats', ''),
-        ('🗑️ Clear All Cache', 'clear_cache', ''),
-        ('ℹ️ Addon Information', 'addon_info', '')
-    ]
-    
-    for name, action, param in menu_items:
-        list_item = xbmcgui.ListItem(label=name)
-        list_item.setArt({'thumb': 'DefaultAddonProgram.png'})
-        
-        url = get_url(action=action)
-        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
-    
-    xbmcplugin.endOfDirectory(plugin_handle)
-
-def test_tmdb():
-    """Test TMDB connection"""
+def get_enhanced_tmdb_details(tmdb_id, media_type):
+    """Get enhanced TMDB details including external IDs"""
     try:
         api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
-        url = f'https://api.themoviedb.org/3/movie/popular?api_key={api_key}&page=1'
+        
+        if media_type == 'movie':
+            url = f'https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
+        else:
+            url = f'https://api.themoviedb.org/3/tv/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
         
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        result = response.json()
+        data = response.json()
         
-        if result and 'results' in result:
-            message = f"✅ TMDB Connection Successful!\n\nFound {len(result['results'])} popular movies.\nTotal pages: {result.get('total_pages', 0)}"
-            xbmcgui.Dialog().ok('TMDB Test', message)
-        else:
-            xbmcgui.Dialog().ok('TMDB Test', '❌ TMDB Connection Failed!\n\nNo results returned from API.')
-    
+        # Extract useful info
+        enhanced_data = {}
+        if 'external_ids' in data:
+            enhanced_data['imdb_id'] = data['external_ids'].get('imdb_id')
+            enhanced_data['tvdb_id'] = data['external_ids'].get('tvdb_id')
+        
+        return enhanced_data
+        
     except Exception as e:
-        xbmcgui.Dialog().ok('TMDB Test', f'❌ TMDB Connection Error!\n\n{str(e)}')
+        xbmc.log(f"MovieStream: Error getting enhanced TMDB details: {str(e)}", xbmc.LOGERROR)
+        return {}
 
 def test_github():
     """Test GitHub connection"""
