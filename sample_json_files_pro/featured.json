@@ -1,0 +1,93 @@
+{
+  "featured_movies": [
+    {
+      "id": "movie_001",
+      "title": "Big Buck Bunny",
+      "featured_reason": "Editor's Pick - Classic Animation",
+      "featured_date": "2024-01-15"
+    },
+    {
+      "id": "movie_003", 
+      "title": "Sintel",
+      "featured_reason": "Trending Now - Award Winner",
+      "featured_date": "2024-01-20"
+    }
+  ],
+  "featured_shows": [
+    {
+      "id": "show_001",
+      "title": "Sample Animation Series",
+      "featured_reason": "Staff Favorite - Must Watch",
+      "featured_date": "2024-01-18"
+    },
+    {
+      "id": "show_002",
+      "title": "Tech Documentary Series",
+      "featured_reason": "Educational Excellence",
+      "featured_date": "2024-01-22"
+    }
+  ],
+  "hero_content": {
+    "id": "movie_003",
+    "title": "Sintel", 
+    "type": "movie",
+    "description": "Experience the epic adventure of a young warrior and her dragon companion in this stunning animated masterpiece from Blender Studios.",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    "backdrop_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_trailer_400p.png",
+    "genre": "Animation, Adventure, Fantasy",
+    "year": 2010,
+    "rating": 8.0
+  },
+  "collections": [
+    {
+      "name": "Blender Open Movies",
+      "description": "Free and open source animated films from Blender Studios",
+      "movies": ["movie_001", "movie_002", "movie_003"],
+      "poster_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png"
+    },
+    {
+      "name": "Short Films Collection",
+      "description": "Curated collection of award-winning short films",
+      "movies": ["movie_001", "movie_002", "movie_003"],
+      "poster_url": "https://orange.blender.org/wp-content/themes/orange/images/media/gallery/s5_proog.jpg"
+    }
+  ],
+  "trending": {
+    "movies": [
+      {
+        "id": "movie_003",
+        "title": "Sintel",
+        "trend_score": 95,
+        "trend_reason": "Viral on social media"
+      },
+      {
+        "id": "movie_001", 
+        "title": "Big Buck Bunny",
+        "trend_score": 88,
+        "trend_reason": "Classic favorite"
+      }
+    ],
+    "shows": [
+      {
+        "id": "show_002",
+        "title": "Tech Documentary Series", 
+        "trend_score": 92,
+        "trend_reason": "High user engagement"
+      }
+    ]
+  },
+  "new_releases": [
+    {
+      "id": "movie_003",
+      "title": "Sintel",
+      "release_date": "2024-01-17",
+      "type": "movie"
+    },
+    {
+      "id": "show_002",
+      "title": "Tech Documentary Series",
+      "release_date": "2024-01-20", 
+      "type": "tvshow"
+    }
+  ]
+}
