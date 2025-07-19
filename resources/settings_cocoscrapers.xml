@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="32001">
+        <setting id="tmdb_api_key" type="text" label="32002" default="d0f489a129429db6f2dd4751e5dbeb82" option="hidden" />
+        <setting id="github_repo_url" type="text" label="32003" default="https://raw.githubusercontent.com/aussiemaniacs/homiestest/main/" />
+        <setting id="enable_github_sync" type="bool" label="32004" default="true" />
+        <setting id="auto_update_metadata" type="bool" label="32005" default="true" />
+    </category>
+    <category label="32010">
+        <setting id="video_quality" type="select" label="32011" default="720p" values="480p|720p|1080p|4K" />
+        <setting id="subtitle_language" type="select" label="32012" default="en" values="en|es|fr|de|it|pt" />
+        <setting id="enable_subtitles" type="bool" label="32013" default="true" />
+        <setting id="buffer_size" type="slider" label="32014" default="5" range="1,1,20" option="int" />
+    </category>
+    <category label="32030">
+        <setting id="auto_play_best_source" type="bool" label="32031" default="false" />
+        <setting id="max_sources" type="slider" label="32032" default="20" range="5,1,50" option="int" />
+        <setting id="quality_filter" type="select" label="32033" default="all" values="all|480p|720p|1080p|4k" />
+        <setting id="enable_debrid" type="bool" label="32034" default="false" />
+        <setting id="scraper_timeout" type="slider" label="32035" default="30" range="10,5,60" option="int" />
+    </category>
+    <category label="32020">
+        <setting id="cache_metadata" type="bool" label="32021" default="true" />
+        <setting id="cache_duration" type="slider" label="32022" default="24" range="1,1,168" option="int" />
+        <setting id="clear_cache" type="action" label="32023" action="RunPlugin(plugin://plugin.video.moviestream/?action=clear_cache)" />
+    </category>
+</settings>
