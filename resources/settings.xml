@@ -1,58 +1,129 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
+
 <settings>
-    <!-- API Settings -->
-    <category label="32001">
-        <setting id="tmdb_api_key" type="text" label="32002" default="d0f489a129429db6f2dd4751e5dbeb82" option="hidden" />
-        <setting id="github_repo_url" type="text" label="32003" default="https://raw.githubusercontent.com/aussiemaniacs/homiestest/main/" />
-        <setting id="enable_github_sync" type="bool" label="32004" default="true" />
-        <setting id="auto_update_metadata" type="bool" label="32005" default="true" />
-        <setting id="enable_trakt" type="bool" label="32006" default="false" />
-    </category>
-    
-    <!-- Playback Settings -->
-    <category label="32010">
-        <setting id="video_quality" type="select" label="32011" default="1080p" values="480p|720p|1080p|4K" />
-        <setting id="subtitle_language" type="select" label="32012" default="en" values="en|es|fr|de|it|pt|ru|zh|ja|ko" />
-        <setting id="enable_subtitles" type="bool" label="32013" default="true" />
-        <setting id="buffer_size" type="slider" label="32014" default="20" range="5,5,100" option="int" />
-        <setting id="auto_next_episode" type="bool" label="32015" default="true" />
-    </category>
-    
-    <!-- Cocoscrapers Settings -->
-    <category label="32030">
-        <setting id="enable_cocoscrapers" type="bool" label="32031" default="true" />
-        <setting id="auto_play_best_source" type="bool" label="32032" default="false" />
-        <setting id="max_sources" type="slider" label="32033" default="25" range="10,5,50" option="int" />
-        <setting id="quality_filter" type="select" label="32034" default="all" values="all|480p|720p|1080p|4k" />
-        <setting id="scraper_timeout" type="slider" label="32035" default="40" range="15,5,120" option="int" />
-        <setting id="enable_torrent_scrapers" type="bool" label="32036" default="false" />
-    </category>
-    
-    <!-- Debrid Services -->
-    <category label="32040">
-        <setting id="enable_realdebrid" type="bool" label="32041" default="false" />
-        <setting id="realdebrid_api_key" type="text" label="32042" default="" option="hidden" />
-        <setting id="enable_premiumize" type="bool" label="32043" default="false" />
-        <setting id="premiumize_api_key" type="text" label="32044" default="" option="hidden" />
-        <setting id="enable_alldebrid" type="bool" label="32045" default="false" />
-        <setting id="alldebrid_api_key" type="text" label="32046" default="" option="hidden" />
-        <setting id="debrid_priority" type="select" label="32047" default="realdebrid" values="realdebrid|premiumize|alldebrid" />
-    </category>
-    
-    <!-- UI Settings -->
-    <category label="32050">
-        <setting id="enable_fanart" type="bool" label="32051" default="true" />
-        <setting id="show_plot" type="bool" label="32052" default="true" />
-        <setting id="show_ratings" type="bool" label="32053" default="true" />
-        <setting id="items_per_page" type="slider" label="32054" default="20" range="10,5,50" option="int" />
-        <setting id="enable_context_menus" type="bool" label="32055" default="true" />
-        <setting id="default_view" type="select" label="32056" default="auto" values="auto|list|thumbnail|poster|fanart" />
-    </category>
-    
-    <!-- Watchlist Settings -->
-    <category label="32060">
-        <setting id="enable_watchlist" type="bool" label="32061" default="true" />
-        <setting id="sync_watchlist_cloud" type="bool" label="32062" default="false" />
-        <setting id="auto_remove_watched" type="bool" label="32063" default="false" />
-        <setting id="mark_watched_percentage" type="slider" label="32064" default="90" range="70,5,100" option="int" />
-    </category>
+
+<!-- API Settings -->
+
+<category label="32001">
+
+<setting id="tmdb_api_key" type="text" label="32002" default="d0f489a129429db6f2dd4751e5dbeb82" option="hidden" />
+
+<setting id="github_repo_url" type="text" label="32003" default="https://raw.githubusercontent.com/aussiemaniacs/homiestest/main/" />
+
+<setting id="enable_github_sync" type="bool" label="32004" default="true" />
+
+<setting id="auto_update_metadata" type="bool" label="32005" default="true" />
+
+<setting id="enable_trakt" type="bool" label="32006" default="false" />
+
+</category>
+
+
+<!-- Playback Settings -->
+
+<category label="32010">
+
+<setting id="video_quality" type="select" label="32011" default="1080p" values="480p|720p|1080p|4K" />
+
+<setting id="subtitle_language" type="select" label="32012" default="en" values="en|es|fr|de|it|pt|ru|zh|ja|ko" />
+
+<setting id="enable_subtitles" type="bool" label="32013" default="true" />
+
+<setting id="buffer_size" type="slider" label="32014" default="20" range="5,5,100" option="int" />
+
+<setting id="auto_next_episode" type="bool" label="32015" default="true" />
+
+</category>
+
+
+<!-- Cocoscrapers Settings -->
+
+<category label="32030">
+
+<setting id="enable_cocoscrapers" type="bool" label="32031" default="true" />
+
+<setting id="auto_play_best_source" type="bool" label="32032" default="false" />
+
+<setting id="max_sources" type="slider" label="32033" default="25" range="10,5,50" option="int" />
+
+<setting id="quality_filter" type="select" label="32034" default="all" values="all|480p|720p|1080p|4k" />
+
+<setting id="scraper_timeout" type="slider" label="32035" default="40" range="15,5,120" option="int" />
+
+<setting id="enable_torrent_scrapers" type="bool" label="32036" default="false" />
+
+</category>
+
+
+<!-- Debrid Services -->
+
+<category label="32040">
+
+<setting id="enable_realdebrid" type="bool" label="32041" default="false" />
+
+<setting id="realdebrid_api_key" type="text" label="32042" default="" option="hidden" />
+
+<setting id="enable_premiumize" type="bool" label="32043" default="false" />
+
+<setting id="premiumize_api_key" type="text" label="32044" default="" option="hidden" />
+
+<setting id="enable_alldebrid" type="bool" label="32045" default="false" />
+
+<setting id="alldebrid_api_key" type="text" label="32046" default="" option="hidden" />
+
+<setting id="debrid_priority" type="select" label="32047" default="realdebrid" values="realdebrid|premiumize|alldebrid" />
+
+</category>
+
+
+<!-- UI Settings -->
+
+<category label="32050">
+
+<setting id="enable_fanart" type="bool" label="32051" default="true" />
+
+<setting id="show_plot" type="bool" label="32052" default="true" />
+
+<setting id="show_ratings" type="bool" label="32053" default="true" />
+
+<setting id="items_per_page" type="slider" label="32054" default="20" range="10,5,50" option="int" />
+
+<setting id="enable_context_menus" type="bool" label="32055" default="true" />
+
+<setting id="default_view" type="select" label="32056" default="auto" values="auto|list|thumbnail|poster|fanart" />
+
+</category>
+
+
+<!-- Watchlist Settings -->
+
+<category label="32060">
+
+<setting id="enable_watchlist" type="bool" label="32061" default="true" />
+
+<setting id="sync_watchlist_cloud" type="bool" label="32062" default="false" />
+
+<setting id="auto_remove_watched" type="bool" label="32063" default="false" />
+
+<setting id="mark_watched_percentage" type="slider" label="32064" default="90" range="70,5,100" option="int" />
+
+</category>
+
+
+<!-- Cache Settings -->
+
+<category label="32020">
+
+<setting id="cache_metadata" type="bool" label="32021" default="true" />
+
+<setting id="cache_duration" type="slider" label="32022" default="48" range="1,1,168" option="int" />
+
+<setting id="cache_sources" type="bool" label="32025" default="true" />
+
+<setting id="clear_cache" type="action" label="32023" action="RunPlugin(plugin://plugin.video.moviestream/?action=clear_cache)" />
+
+<setting id="clear_watchlist" type="action" label="32026" action="RunPlugin(plugin://plugin.video.moviestream/?action=clear_watchlist)" />
+
+</category>
+
+</settings>
