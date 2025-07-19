@@ -167,8 +167,15 @@ class CocoScrapersClient:
     def _get_enabled_scrapers(self):
         """Get list of enabled scrapers"""
         try:
-            # Get all available scrapers
-            all_scrapers = self.cocoscrapers.relevant_scrapers()
+            # Get all available scrapers from cocoscrapers
+            if hasattr(self.cocoscrapers, 'relevant_scrapers'):
+                all_scrapers = self.cocoscrapers.relevant_scrapers()
+            elif hasattr(self.cocoscrapers, 'get_scrapers'):
+                all_scrapers = self.cocoscrapers.get_scrapers()
+            else:
+                # Fallback - return empty list if method not found
+                xbmc.log("MovieStream: No scraper method found in cocoscrapers", xbmc.LOGWARNING)
+                return []
             
             # Filter enabled scrapers (you can add settings for this)
             enabled_scrapers = []
