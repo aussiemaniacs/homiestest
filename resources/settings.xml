@@ -26,7 +26,7 @@
         <setting id="auto_play_best_source" type="bool" label="32032" default="false" />
         <setting id="max_sources" type="slider" label="32033" default="25" range="10,5,50" option="int" />
         <setting id="quality_filter" type="select" label="32034" default="all" values="all|480p|720p|1080p|4k" />
-        <setting id="scraper_timeout" type="slider" label="32035" default="40" range="15,5,120" option="int" />
+        <setting id="scraper_timeout" type="slider" label="32035" default="30" range="15,5,60" option="int" />
         <setting id="enable_torrent_scrapers" type="bool" label="32036" default="false" />
     </category>
     
