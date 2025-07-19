@@ -327,21 +327,25 @@ class WatchlistManager:
         """Get context menu items for an item"""
         context_items = []
         
-        # Watchlist
-        if self.is_in_watchlist(item):
-            context_items.append(('Remove from Watchlist', f'RunPlugin(plugin://plugin.video.moviestream/?action=remove_watchlist&item_data={json.dumps(item)})'))
-        else:
-            context_items.append(('Add to Watchlist', f'RunPlugin(plugin://plugin.video.moviestream/?action=add_watchlist&item_data={json.dumps(item)})'))
+        try:
+            # Watchlist
+            if self.is_in_watchlist(item):
+                context_items.append(('Remove from Watchlist', f'RunPlugin(plugin://plugin.video.moviestream/?action=remove_watchlist&item_data={urlparse_quote(json.dumps(item))})'))
+            else:
+                context_items.append(('Add to Watchlist', f'RunPlugin(plugin://plugin.video.moviestream/?action=add_watchlist&item_data={urlparse_quote(json.dumps(item))})'))
+            
+            # Favorites
+            if self.is_favorite(item):
+                context_items.append(('Remove from Favorites', f'RunPlugin(plugin://plugin.video.moviestream/?action=remove_favorite&item_data={urlparse_quote(json.dumps(item))})'))
+            else:
+                context_items.append(('Add to Favorites', f'RunPlugin(plugin://plugin.video.moviestream/?action=add_favorite&item_data={urlparse_quote(json.dumps(item))})'))
+            
+            # Resume point
+            resume_point = self.get_resume_point(item)
+            if resume_point:
+                context_items.append(('Clear Resume Point', f'RunPlugin(plugin://plugin.video.moviestream/?action=clear_resume&item_data={urlparse_quote(json.dumps(item))})'))
         
-        # Favorites
-        if self.is_favorite(item):
-            context_items.append(('Remove from Favorites', f'RunPlugin(plugin://plugin.video.moviestream/?action=remove_favorite&item_data={json.dumps(item)})'))
-        else:
-            context_items.append(('Add to Favorites', f'RunPlugin(plugin://plugin.video.moviestream/?action=add_favorite&item_data={json.dumps(item)})'))
-        
-        # Resume point
-        resume_point = self.get_resume_point(item)
-        if resume_point:
-            context_items.append(('Clear Resume Point', f'RunPlugin(plugin://plugin.video.moviestream/?action=clear_resume&item_data={json.dumps(item)})'))
+        except Exception as e:
+            xbmc.log(f"MovieStream: Error creating context menu: {str(e)}", xbmc.LOGERROR)
         
         return context_items
