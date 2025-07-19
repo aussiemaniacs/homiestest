@@ -153,9 +153,12 @@ class CocoScrapersClient:
     def _perform_scraping(self, data, content_type, scrapers):
         """Perform the actual scraping in a separate thread"""
         try:
+            # Import cocoscrapers functions
             if content_type == 'movie':
+                # Use cocoscrapers movie scraping function
                 self.sources = self.cocoscrapers.scrape_movie(data, scrapers)
             else:
+                # Use cocoscrapers episode scraping function  
                 self.sources = self.cocoscrapers.scrape_episode(data, scrapers)
         except Exception as e:
             xbmc.log(f"MovieStream: Scraping thread error: {str(e)}", xbmc.LOGERROR)
