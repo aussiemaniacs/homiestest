@@ -17,10 +17,13 @@ import requests
 import json
 
 # Import our enhanced modules
-from resources.lib.cocoscrapers_client import CocoScrapersClient
-from resources.lib.debrid_client import DebridClient
-from resources.lib.tvshow_client import TVShowClient
-from resources.lib.watchlist_manager import WatchlistManager
+try:
+    from resources.lib.cocoscrapers_client import CocoScrapersClient
+    from resources.lib.debrid_client import DebridClient
+    from resources.lib.tvshow_client import TVShowClient
+    from resources.lib.watchlist_manager import WatchlistManager
+except ImportError as e:
+    xbmc.log(f"MovieStream: Import error: {str(e)}", xbmc.LOGERROR)
 
 # Get addon info
 addon = xbmcaddon.Addon()
@@ -29,10 +32,18 @@ plugin_handle = int(sys.argv[1])
 base_url = sys.argv[0]
 
 # Initialize clients
-cocoscrapers_client = CocoScrapersClient()
-debrid_client = DebridClient()
-tvshow_client = TVShowClient()
-watchlist_manager = WatchlistManager()
+try:
+    cocoscrapers_client = CocoScrapersClient()
+    debrid_client = DebridClient()
+    tvshow_client = TVShowClient()
+    watchlist_manager = WatchlistManager()
+except Exception as e:
+    xbmc.log(f"MovieStream: Client initialization error: {str(e)}", xbmc.LOGERROR)
+    # Initialize with basic functionality
+    cocoscrapers_client = None
+    debrid_client = None
+    tvshow_client = None
+    watchlist_manager = None
 
 def get_url(**kwargs):
     """Create a URL for calling the plugin"""
@@ -57,7 +68,6 @@ def list_categories():
         list_item = xbmcgui.ListItem(label=name)
         list_item.setArt({'thumb': icon, 'icon': icon})
         
-        # Add info
         list_item.setInfo('video', {
             'title': name,
             'genre': 'Directory',
@@ -70,7 +80,6 @@ def list_categories():
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
-# MOVIES MENU
 def movies_menu():
     """Movies submenu"""
     xbmcplugin.setPluginCategory(plugin_handle, '🎬 Movies')
@@ -93,7 +102,6 @@ def movies_menu():
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
-# SEARCH MENU
 def search_menu():
     """Search submenu"""
     xbmcplugin.setPluginCategory(plugin_handle, '🔍 Search')
@@ -112,6 +120,31 @@ def search_menu():
         xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
     
     xbmcplugin.endOfDirectory(plugin_handle)
+
+def get_enhanced_tmdb_details(tmdb_id, media_type):
+    """Get enhanced TMDB details including external IDs"""
+    try:
+        api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
+        
+        if media_type == 'movie':
+            url = f'https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
+        else:
+            url = f'https://api.themoviedb.org/3/tv/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
+        
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        enhanced_data = {}
+        if 'external_ids' in data:
+            enhanced_data['imdb_id'] = data['external_ids'].get('imdb_id')
+            enhanced_data['tvdb_id'] = data['external_ids'].get('tvdb_id')
+        
+        return enhanced_data
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error getting enhanced TMDB details: {str(e)}", xbmc.LOGERROR)
+        return {}
 
 def get_tmdb_movies(category='popular', page=1):
     """Get movies from TMDB API"""
@@ -149,7 +182,6 @@ def list_tmdb_movies(category='popular', page=1):
         for movie in movies_data.get('results', []):
             add_movie_item(movie, from_tmdb=True)
         
-        # Add next page
         if page < movies_data.get('total_pages', 1):
             list_item = xbmcgui.ListItem(label='➡️ Next Page >>')
             list_item.setArt({'thumb': 'DefaultFolder.png'})
@@ -164,7 +196,6 @@ def add_movie_item(movie, from_tmdb=False):
     year = movie.get('release_date', '')[:4] if movie.get('release_date') else movie.get('year', '')
     plot = movie.get('overview', movie.get('plot', 'No description available'))
     
-    # Create ListItem
     display_title = f"{title} ({year})" if year else title
     list_item = xbmcgui.ListItem(label=display_title)
     
@@ -181,7 +212,6 @@ def add_movie_item(movie, from_tmdb=False):
             fanart_url = f"https://image.tmdb.org/t/p/w1280{backdrop_path}"
             list_item.setArt({'fanart': fanart_url})
     else:
-        # GitHub/custom sources
         if movie.get('poster_url'):
             list_item.setArt({'thumb': movie['poster_url'], 'poster': movie['poster_url']})
         if movie.get('backdrop_url'):
@@ -200,7 +230,6 @@ def add_movie_item(movie, from_tmdb=False):
         'mediatype': 'movie'
     })
     
-    # Set as playable
     list_item.setProperty('IsPlayable', 'true')
     
     # Create movie data for playback
@@ -215,11 +244,10 @@ def add_movie_item(movie, from_tmdb=False):
     }
     
     # Add context menu items
-    if addon.getSettingBool('enable_context_menus'):
+    if addon.getSettingBool('enable_context_menus') and watchlist_manager:
         context_items = watchlist_manager.get_context_menu_items(movie_data)
         
-        # Add source selection context menu
-        if cocoscrapers_client.is_available():
+        if cocoscrapers_client and cocoscrapers_client.is_available():
             context_items.append((
                 'Select Source',
                 f'RunPlugin({get_url(action="select_movie_source", movie_data=json.dumps(movie_data))})'
@@ -227,11 +255,9 @@ def add_movie_item(movie, from_tmdb=False):
         
         list_item.addContextMenuItems(context_items)
     
-    # Set playback URL
     url = get_url(action='play_movie', movie_data=json.dumps(movie_data))
     xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
 
-# TV SHOWS MENU
 def tvshows_menu():
     """TV shows submenu"""
     xbmcplugin.setPluginCategory(plugin_handle, '📺 TV Shows')
@@ -255,6 +281,10 @@ def tvshows_menu():
 
 def list_tv_shows(category='popular', page=1):
     """List TV shows"""
+    if not tvshow_client:
+        xbmcgui.Dialog().notification('MovieStream', 'TV Show client not available', xbmcgui.NOTIFICATION_ERROR)
+        return
+    
     category_names = {
         'popular': 'Popular TV Shows',
         'top_rated': 'Top Rated TV Shows',
@@ -277,7 +307,6 @@ def list_tv_shows(category='popular', page=1):
         for show in shows_data.get('results', []):
             add_tv_show_item(show)
         
-        # Add next page
         if page < shows_data.get('total_pages', 1):
             list_item = xbmcgui.ListItem(label='➡️ Next Page >>')
             list_item.setArt({'thumb': 'DefaultFolder.png'})
@@ -308,7 +337,6 @@ def add_tv_show_item(show):
         fanart_url = f"https://image.tmdb.org/t/p/w1280{backdrop_path}"
         list_item.setArt({'fanart': fanart_url})
     
-    # Set video info
     list_item.setInfo('video', {
         'title': title,
         'plot': plot,
@@ -318,7 +346,6 @@ def add_tv_show_item(show):
         'mediatype': 'tvshow'
     })
     
-    # Create show data
     show_data = {
         'title': title,
         'year': str(year),
@@ -328,8 +355,7 @@ def add_tv_show_item(show):
         'plot': plot
     }
     
-    # Add context menu
-    if addon.getSettingBool('enable_context_menus'):
+    if addon.getSettingBool('enable_context_menus') and watchlist_manager:
         context_items = watchlist_manager.get_context_menu_items(show_data)
         list_item.addContextMenuItems(context_items)
     
@@ -338,6 +364,9 @@ def add_tv_show_item(show):
 
 def show_seasons(show_id):
     """Show seasons for a TV show"""
+    if not tvshow_client:
+        return
+    
     show_details = tvshow_client.get_show_details(show_id)
     
     if show_details:
@@ -369,6 +398,9 @@ def show_seasons(show_id):
 
 def show_episodes(show_id, season_number):
     """Show episodes for a season"""
+    if not tvshow_client:
+        return
+    
     season_details = tvshow_client.get_season_details(show_id, season_number)
     
     if season_details:
@@ -399,7 +431,6 @@ def show_episodes(show_id, season_number):
             
             list_item.setProperty('IsPlayable', 'true')
             
-            # Create episode data
             episode_data = {
                 'title': episode_name,
                 'show_title': show_name,
@@ -411,8 +442,7 @@ def show_episodes(show_id, season_number):
                 'plot': episode.get('overview', '')
             }
             
-            # Add context menu
-            if addon.getSettingBool('enable_context_menus'):
+            if addon.getSettingBool('enable_context_menus') and watchlist_manager:
                 context_items = watchlist_manager.get_context_menu_items(episode_data)
                 list_item.addContextMenuItems(context_items)
             
@@ -421,9 +451,12 @@ def show_episodes(show_id, season_number):
         
         xbmcplugin.endOfDirectory(plugin_handle)
 
-# MY LISTS MENU
 def my_lists():
     """My Lists submenu"""
+    if not watchlist_manager:
+        xbmcgui.Dialog().notification('MovieStream', 'Watchlist manager not available', xbmcgui.NOTIFICATION_ERROR)
+        return
+    
     xbmcplugin.setPluginCategory(plugin_handle, '⭐ My Lists')
     
     stats = watchlist_manager.get_stats()
@@ -446,6 +479,9 @@ def my_lists():
 
 def list_watchlist():
     """List watchlist items"""
+    if not watchlist_manager:
+        return
+    
     xbmcplugin.setPluginCategory(plugin_handle, '📋 Watchlist')
     xbmcplugin.setContent(plugin_handle, 'movies')
     
@@ -494,14 +530,12 @@ def github_collection():
     except Exception as e:
         xbmc.log(f"MovieStream: Error loading GitHub collection: {str(e)}", xbmc.LOGERROR)
         
-        # Show error message
         list_item = xbmcgui.ListItem(label='❌ Error loading GitHub collection')
         list_item.setInfo('video', {'title': 'Error', 'plot': 'Check GitHub repository URL in settings'})
         xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
-# SEARCH FUNCTIONS
 def search_movies():
     """Search for movies"""
     keyboard = xbmc.Keyboard('', 'Search Movies')
@@ -536,7 +570,7 @@ def search_tv_shows():
     
     if keyboard.isConfirmed():
         query = keyboard.getText()
-        if query:
+        if query and tvshow_client:
             try:
                 results = tvshow_client.search_shows(query)
                 
@@ -552,33 +586,32 @@ def search_tv_shows():
                 xbmc.log(f"MovieStream: TV search error: {str(e)}", xbmc.LOGERROR)
                 xbmcgui.Dialog().notification('MovieStream', 'Search failed', xbmcgui.NOTIFICATION_ERROR)
 
-# PLAYBACK FUNCTIONS
 def play_movie(movie_data_str):
     """Play a movie with proper cocoscrapers integration"""
     try:
         movie_data = json.loads(movie_data_str)
         
         # Check for resume point
-        resume_point = watchlist_manager.get_resume_point(movie_data)
-        if resume_point:
-            choice = xbmcgui.Dialog().yesno(
-                'Resume Playback',
-                f"Resume from {int(resume_point['percentage'])}%?",
-                'Start Over', 'Resume'
-            )
-            if not choice:  # Start over
-                watchlist_manager.remove_resume_point(movie_data)
+        resume_point = None
+        if watchlist_manager:
+            resume_point = watchlist_manager.get_resume_point(movie_data)
+            if resume_point:
+                choice = xbmcgui.Dialog().yesno(
+                    'Resume Playback',
+                    f"Resume from {int(resume_point['percentage'])}%?",
+                    'Start Over', 'Resume'
+                )
+                if not choice:  # Start over
+                    watchlist_manager.remove_resume_point(movie_data)
         
         # Get enhanced TMDB info if available
         tmdb_id = movie_data.get('tmdb_id')
         imdb_id = movie_data.get('imdb_id')
         
-        # If we have TMDB ID, get more details
         if tmdb_id:
             try:
                 movie_details = get_enhanced_tmdb_details(tmdb_id, 'movie')
                 if movie_details:
-                    # Update movie data with enhanced info
                     movie_data.update(movie_details)
                     imdb_id = movie_details.get('imdb_id') or imdb_id
             except Exception as e:
@@ -586,7 +619,7 @@ def play_movie(movie_data_str):
         
         # Try Cocoscrapers with enhanced data
         sources_found = False
-        if cocoscrapers_client.is_available() and addon.getSettingBool('enable_cocoscrapers'):
+        if cocoscrapers_client and cocoscrapers_client.is_available() and addon.getSettingBool('enable_cocoscrapers'):
             xbmc.log(f"MovieStream: Attempting to scrape sources for {movie_data['title']}", xbmc.LOGINFO)
             
             sources = cocoscrapers_client.scrape_movie_sources(
@@ -596,15 +629,13 @@ def play_movie(movie_data_str):
                 imdb_id=imdb_id
             )
             
-            # Filter with debrid services if available
-            if debrid_client.is_available():
+            if debrid_client and debrid_client.is_available():
                 sources = debrid_client.filter_debrid_sources(sources)
             
             if sources:
                 sources_found = True
                 xbmc.log(f"MovieStream: Found {len(sources)} sources", xbmc.LOGINFO)
                 
-                # Auto-play or show selection
                 selected_source = None
                 if addon.getSettingBool('auto_play_best_source') and len(sources) > 0:
                     selected_source = sources[0]
@@ -613,12 +644,10 @@ def play_movie(movie_data_str):
                     selected_source = cocoscrapers_client.show_source_selection(sources, movie_data['title'])
                 
                 if selected_source:
-                    # Resolve the source
                     resolved_url = cocoscrapers_client.resolve_source(selected_source)
                     
                     if resolved_url:
                         xbmc.log(f"MovieStream: Playing resolved URL for {movie_data['title']}", xbmc.LOGINFO)
-                        # Play resolved URL
                         play_resolved_url(resolved_url, movie_data, resume_point)
                         return
                     else:
@@ -652,23 +681,22 @@ def play_episode(episode_data_str):
     try:
         episode_data = json.loads(episode_data_str)
         
-        # Check for resume point
-        resume_point = watchlist_manager.get_resume_point(episode_data)
-        if resume_point:
-            choice = xbmcgui.Dialog().yesno(
-                'Resume Playback',
-                f"Resume from {int(resume_point['percentage'])}%?",
-                'Start Over', 'Resume'
-            )
-            if not choice:
-                watchlist_manager.remove_resume_point(episode_data)
+        resume_point = None
+        if watchlist_manager:
+            resume_point = watchlist_manager.get_resume_point(episode_data)
+            if resume_point:
+                choice = xbmcgui.Dialog().yesno(
+                    'Resume Playback',
+                    f"Resume from {int(resume_point['percentage'])}%?",
+                    'Start Over', 'Resume'
+                )
+                if not choice:
+                    watchlist_manager.remove_resume_point(episode_data)
         
-        # Get enhanced show info
         show_tmdb_id = episode_data.get('show_tmdb_id')
         
-        # Try Cocoscrapers
         sources_found = False
-        if cocoscrapers_client.is_available() and addon.getSettingBool('enable_cocoscrapers'):
+        if cocoscrapers_client and cocoscrapers_client.is_available() and addon.getSettingBool('enable_cocoscrapers') and tvshow_client:
             xbmc.log(f"MovieStream: Attempting to scrape episode sources for {episode_data.get('show_title', '')} S{episode_data.get('season')}E{episode_data.get('episode')}", xbmc.LOGINFO)
             
             sources = tvshow_client.scrape_episode_sources(
@@ -679,7 +707,7 @@ def play_episode(episode_data_str):
                 show_id=show_tmdb_id
             )
             
-            if debrid_client.is_available():
+            if debrid_client and debrid_client.is_available():
                 sources = debrid_client.filter_debrid_sources(sources)
             
             if sources:
@@ -700,15 +728,12 @@ def play_episode(episode_data_str):
                         play_resolved_url(resolved_url, episode_data, resume_point)
                         return
         
-        # If no sources found
         if not sources_found:
-            # Try direct video URL
             video_url = episode_data.get('video_url')
             if video_url:
                 play_resolved_url(video_url, episode_data, resume_point)
                 return
             
-            # Notify user
             episode_title = f"{episode_data.get('show_title', 'Unknown')} S{episode_data.get('season')}E{episode_data.get('episode')}"
             xbmcgui.Dialog().notification(
                 'MovieStream', 
@@ -719,33 +744,86 @@ def play_episode(episode_data_str):
         
     except Exception as e:
         xbmc.log(f"MovieStream: Error playing episode: {str(e)}", xbmc.LOGERROR)
-        xbmcgui.Dialog().notification('MovieStream', 'Playback error occurred', xbmc.NOTIFICATION_ERROR)
+        xbmcgui.Dialog().notification('MovieStream', 'Playback error occurred', xbmcgui.NOTIFICATION_ERROR)
 
-def get_enhanced_tmdb_details(tmdb_id, media_type):
-    """Get enhanced TMDB details including external IDs"""
+def play_resolved_url(url, item_data, resume_point=None):
+    """Play a resolved URL with metadata"""
+    try:
+        list_item = xbmcgui.ListItem(label=item_data.get('title', 'Unknown'), path=url)
+        
+        # Set info
+        list_item.setInfo('video', {
+            'title': item_data.get('title', 'Unknown'),
+            'plot': item_data.get('plot', ''),
+            'year': int(item_data.get('year', 0)) if str(item_data.get('year', '')).isdigit() else 0,
+            'mediatype': item_data.get('type', 'video')
+        })
+        
+        # Set artwork
+        if item_data.get('poster_url'):
+            list_item.setArt({'thumb': item_data['poster_url']})
+        
+        # Set resume point
+        if resume_point:
+            list_item.setProperty('ResumeTime', str(resume_point['position']))
+            list_item.setProperty('TotalTime', str(resume_point['total_time']))
+        
+        # Handle different stream types
+        if url.lower().endswith('.m3u8') or 'manifest.m3u8' in url.lower():
+            list_item.setProperty('inputstream', 'inputstream.adaptive')
+            list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
+            list_item.setMimeType('application/vnd.apple.mpegurl')
+        
+        # Add to history
+        if watchlist_manager:
+            watchlist_manager.add_to_history(item_data)
+        
+        xbmcplugin.setResolvedUrl(plugin_handle, True, list_item)
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error playing resolved URL: {str(e)}", xbmc.LOGERROR)
+
+def tools_menu():
+    """Tools submenu"""
+    xbmcplugin.setPluginCategory(plugin_handle, '⚙️ Tools')
+    
+    menu_items = [
+        ('🔍 Test TMDB Connection', 'test_tmdb', ''),
+        ('📁 Test GitHub Connection', 'test_github', ''),
+        ('🎬 Cocoscrapers Status', 'cocoscrapers_status', ''),
+        ('💎 Debrid Account Status', 'debrid_status', ''),
+        ('📊 Addon Statistics', 'addon_stats', ''),
+        ('🗑️ Clear All Cache', 'clear_cache', ''),
+        ('ℹ️ Addon Information', 'addon_info', '')
+    ]
+    
+    for name, action, param in menu_items:
+        list_item = xbmcgui.ListItem(label=name)
+        list_item.setArt({'thumb': 'DefaultAddonProgram.png'})
+        
+        url = get_url(action=action)
+        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
+    
+    xbmcplugin.endOfDirectory(plugin_handle)
+
+def test_tmdb():
+    """Test TMDB connection"""
     try:
         api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
-        
-        if media_type == 'movie':
-            url = f'https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
-        else:
-            url = f'https://api.themoviedb.org/3/tv/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
+        url = f'https://api.themoviedb.org/3/movie/popular?api_key={api_key}&page=1'
         
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        data = response.json()
+        result = response.json()
         
-        # Extract useful info
-        enhanced_data = {}
-        if 'external_ids' in data:
-            enhanced_data['imdb_id'] = data['external_ids'].get('imdb_id')
-            enhanced_data['tvdb_id'] = data['external_ids'].get('tvdb_id')
-        
-        return enhanced_data
-        
+        if result and 'results' in result:
+            message = f"✅ TMDB Connection Successful!\n\nFound {len(result['results'])} popular movies.\nTotal pages: {result.get('total_pages', 0)}"
+            xbmcgui.Dialog().ok('TMDB Test', message)
+        else:
+            xbmcgui.Dialog().ok('TMDB Test', '❌ TMDB Connection Failed!\n\nNo results returned from API.')
+    
     except Exception as e:
-        xbmc.log(f"MovieStream: Error getting enhanced TMDB details: {str(e)}", xbmc.LOGERROR)
-        return {}
+        xbmcgui.Dialog().ok('TMDB Test', f'❌ TMDB Connection Error!\n\n{str(e)}')
 
 def test_github():
     """Test GitHub connection"""
@@ -769,6 +847,11 @@ def test_github():
 
 def cocoscrapers_status():
     """Show Cocoscrapers status"""
+    if not cocoscrapers_client:
+        message = "❌ Cocoscrapers Client Error\n\nCocoscrapers client failed to initialize."
+        xbmcgui.Dialog().ok('Cocoscrapers Status', message)
+        return
+    
     stats = cocoscrapers_client.get_scraper_stats()
     
     if stats['available']:
@@ -787,33 +870,42 @@ def cocoscrapers_status():
 
 def debrid_status():
     """Show debrid services status"""
-    if debrid_client.is_available():
-        status = debrid_client.check_account_status()
-        
-        message = "💎 Debrid Services Status\n\n"
-        
-        for service, info in status.items():
-            if info:
-                message += f"{info['service']}: ✅ Active\n"
-                message += f"User: {info.get('username', 'N/A')}\n"
-                message += f"Premium: {'Yes' if info.get('premium', False) else 'No'}\n\n"
-            else:
-                message += f"{service}: ❌ Error\n\n"
-    else:
+    if not debrid_client or not debrid_client.is_available():
         message = "❌ No Debrid Services Configured\n\n"
         message += "Available services:\n"
         message += "• Real-Debrid\n"
         message += "• Premiumize\n"
         message += "• All-Debrid\n\n"
         message += "Configure API keys in Settings."
+        xbmcgui.Dialog().ok('Debrid Status', message)
+        return
+    
+    status = debrid_client.check_account_status()
+    
+    message = "💎 Debrid Services Status\n\n"
+    
+    for service, info in status.items():
+        if info:
+            message += f"{info['service']}: ✅ Active\n"
+            message += f"User: {info.get('username', 'N/A')}\n"
+            message += f"Premium: {'Yes' if info.get('premium', False) else 'No'}\n\n"
+        else:
+            message += f"{service}: ❌ Error\n\n"
     
     xbmcgui.Dialog().ok('Debrid Status', message)
 
 def addon_stats():
     """Show addon statistics"""
-    stats = watchlist_manager.get_stats()
-    cocoscrapers_stats = cocoscrapers_client.get_scraper_stats()
-    debrid_available = debrid_client.is_available()
+    stats = {'watchlist_count': 0, 'favorites_count': 0, 'history_count': 0, 'resume_count': 0}
+    cocoscrapers_stats = {'available': False}
+    debrid_available = False
+    
+    if watchlist_manager:
+        stats = watchlist_manager.get_stats()
+    if cocoscrapers_client:
+        cocoscrapers_stats = cocoscrapers_client.get_scraper_stats()
+    if debrid_client:
+        debrid_available = debrid_client.is_available()
     
     message = f"📊 MovieStream Pro Statistics\n\n"
     message += f"Watchlist: {stats['watchlist_count']} items\n"
@@ -840,6 +932,7 @@ def addon_info():
     message += "• TV Shows & Episodes\n"
     message += "• Watchlist & Favorites\n"
     message += "• Resume Points\n"
+    message += "• M3U/M3U8 Support\n"
     message += "• Advanced Search"
     
     xbmcgui.Dialog().ok('Addon Information', message)
@@ -847,16 +940,18 @@ def addon_info():
 def clear_cache():
     """Clear all cache"""
     try:
-        # Clear watchlist cache (if implemented)
-        watchlist_manager.clear_history()
+        if watchlist_manager:
+            watchlist_manager.clear_history()
         
         xbmcgui.Dialog().notification('MovieStream', 'Cache cleared successfully', xbmcgui.NOTIFICATION_INFO)
     except Exception as e:
         xbmcgui.Dialog().notification('MovieStream', f'Cache clear error: {str(e)}', xbmcgui.NOTIFICATION_ERROR)
 
-# WATCHLIST FUNCTIONS
 def add_to_watchlist(item_data_str):
     """Add item to watchlist"""
+    if not watchlist_manager:
+        return
+    
     try:
         item_data = json.loads(item_data_str)
         success = watchlist_manager.add_to_watchlist(item_data)
@@ -871,6 +966,9 @@ def add_to_watchlist(item_data_str):
 
 def remove_from_watchlist(item_data_str):
     """Remove item from watchlist"""
+    if not watchlist_manager:
+        return
+    
     try:
         item_data = json.loads(item_data_str)
         success = watchlist_manager.remove_from_watchlist(item_data)
@@ -883,6 +981,9 @@ def remove_from_watchlist(item_data_str):
 
 def add_to_favorites(item_data_str):
     """Add item to favorites"""
+    if not watchlist_manager:
+        return
+    
     try:
         item_data = json.loads(item_data_str)
         success = watchlist_manager.add_to_favorites(item_data)
@@ -975,4 +1076,3 @@ def router(paramstring):
 
 if __name__ == '__main__':
     router(sys.argv[2][1:] if len(sys.argv) > 2 else '')
-
