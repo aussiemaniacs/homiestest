@@ -13,6 +13,10 @@ import json
 import os
 import time
 from datetime import datetime
+try:
+    from urllib.parse import quote as urlparse_quote
+except ImportError:
+    from urllib import quote as urlparse_quote
 
 class WatchlistManager:
     """Manager for watchlists, favorites, and watch history"""
