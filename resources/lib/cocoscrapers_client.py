@@ -321,7 +321,13 @@ class CocoScrapersClient:
             
             try:
                 # Use cocoscrapers to resolve the source
-                resolved_url = self.cocoscrapers.resolve_url(source['url'])
+                if hasattr(self.cocoscrapers, 'resolve_url'):
+                    resolved_url = self.cocoscrapers.resolve_url(source['url'])
+                elif hasattr(self.cocoscrapers, 'resolve'):
+                    resolved_url = self.cocoscrapers.resolve(source['url'])
+                else:
+                    # If no resolve method, return direct URL
+                    resolved_url = source['url']
                 
                 progress.close()
                 
@@ -330,12 +336,12 @@ class CocoScrapersClient:
                     return resolved_url
                 else:
                     xbmc.log("MovieStream: Failed to resolve source", xbmc.LOGWARNING)
-                    return None
+                    return source['url']  # Return original URL as fallback
                     
             except Exception as e:
                 progress.close()
                 xbmc.log(f"MovieStream: Error resolving source: {str(e)}", xbmc.LOGERROR)
-                return None
+                return source['url']  # Return original URL as fallback
                 
         except Exception as e:
             xbmc.log(f"MovieStream: General resolve error: {str(e)}", xbmc.LOGERROR)
