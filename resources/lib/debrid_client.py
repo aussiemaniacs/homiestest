@@ -239,8 +239,7 @@ class RealDebridAPI:
         if isinstance(links, str):
             links = [links]
         
-        data = {'link': '\
-'.join(links)}
+        data = {'link': '\n'.join(links)}
         result = self._make_request('unrestrict/check', method='POST', data=data)
         
         return result if result else {}
