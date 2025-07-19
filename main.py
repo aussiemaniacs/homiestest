@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+f#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -470,12 +470,12 @@ def add_movie_item(movie, from_tmdb=False):
         xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
 
 def play_movie(movie_data_str):
-    """Play a movie with comprehensive error handling"""
+    """Play a movie with Cocoscrapers prioritized"""
     try:
         movie_data = json.loads(movie_data_str)
         title = movie_data.get('title', 'Unknown')
         
-        xbmc.log(f"MovieStream: Attempting to play movie: {title}", xbmc.LOGINFO)
+        xbmc.log(f"MovieStream: Play movie requested: {title}", xbmc.LOGINFO)
         
         # Check for resume point
         resume_point = None
@@ -493,55 +493,126 @@ def play_movie(movie_data_str):
             except Exception as e:
                 xbmc.log(f"MovieStream: Resume point error: {str(e)}", xbmc.LOGWARNING)
         
-        # Try direct video URL first (for GitHub sources)
-        video_url = movie_data.get('video_url')
-        m3u8_url = movie_data.get('m3u8_url')
-        
-        if m3u8_url:
-            xbmc.log(f"MovieStream: Using M3U8 URL for {title}", xbmc.LOGINFO)
-            play_resolved_url(m3u8_url, movie_data, resume_point)
-            return
-        elif video_url:
-            xbmc.log(f"MovieStream: Using direct video URL for {title}", xbmc.LOGINFO)
-            play_resolved_url(video_url, movie_data, resume_point)
-            return
-        
-        # Try Cocoscrapers if available
+        # PRIORITY 1: Try Cocoscrapers if enabled and available
         if cocoscrapers_client and cocoscrapers_client.is_available() and addon.getSettingBool('enable_cocoscrapers'):
+            xbmc.log(f"MovieStream: Attempting Cocoscrapers scraping for: {title}", xbmc.LOGINFO)
+            
             try:
+                # Get enhanced TMDB info if available
                 tmdb_id = movie_data.get('tmdb_id')
                 imdb_id = movie_data.get('imdb_id')
+                year = movie_data.get('year', '')
                 
-                xbmc.log(f"MovieStream: Attempting to scrape sources for {title}", xbmc.LOGINFO)
+                # If we have TMDB ID, try to get external IDs
+                if tmdb_id and not imdb_id:
+                    try:
+                        enhanced_data = get_enhanced_tmdb_details(tmdb_id, 'movie')
+                        if enhanced_data.get('imdb_id'):
+                            imdb_id = enhanced_data['imdb_id']
+                            xbmc.log(f"MovieStream: Got IMDB ID from TMDB: {imdb_id}", xbmc.LOGDEBUG)
+                    except Exception as e:
+                        xbmc.log(f"MovieStream: Error getting enhanced TMDB details: {str(e)}", xbmc.LOGWARNING)
                 
+                # Scrape sources with Cocoscrapers
                 sources = cocoscrapers_client.scrape_movie_sources(
                     title=title,
-                    year=movie_data.get('year', ''),
+                    year=year,
                     tmdb_id=tmdb_id,
                     imdb_id=imdb_id
                 )
                 
-                if debrid_client and debrid_client.is_available():
+                # Filter with debrid services if available
+                if debrid_client and debrid_client.is_available() and sources:
+                    xbmc.log("MovieStream: Filtering sources with debrid services", xbmc.LOGDEBUG)
                     sources = debrid_client.filter_debrid_sources(sources)
                 
                 if sources:
-                    xbmc.log(f"MovieStream: Found {len(sources)} sources", xbmc.LOGINFO)
+                    xbmc.log(f"MovieStream: Found {len(sources)} sources via Cocoscrapers", xbmc.LOGINFO)
                     
+                    # Handle source selection
                     selected_source = None
                     if addon.getSettingBool('auto_play_best_source') and len(sources) > 0:
                         selected_source = sources[0]
+                        xbmc.log(f"MovieStream: Auto-playing best source: {selected_source.get('provider', 'Unknown')}", xbmc.LOGINFO)
                     else:
                         selected_source = cocoscrapers_client.show_source_selection(sources, title)
                     
                     if selected_source:
+                        # Resolve the selected source
                         resolved_url = cocoscrapers_client.resolve_source(selected_source)
                         
                         if resolved_url:
                             xbmc.log(f"MovieStream: Playing resolved URL for {title}", xbmc.LOGINFO)
                             play_resolved_url(resolved_url, movie_data, resume_point)
                             return
+                        else:
+                            xbmc.log(f"MovieStream: Failed to resolve selected source for {title}", xbmc.LOGERROR)
+                    else:
+                        xbmc.log(f"MovieStream: No source selected for {title}", xbmc.LOGINFO)
+                else:
+                    xbmc.log(f"MovieStream: No sources found via Cocoscrapers for {title}", xbmc.LOGWARNING)
+                    
             except Exception as e:
                 xbmc.log(f"MovieStream: Cocoscrapers error for {title}: {str(e)}", xbmc.LOGERROR)
+        
+        # PRIORITY 2: Try direct M3U8 URL (if available)
+        m3u8_url = movie_data.get('m3u8_url')
+        if m3u8_url and m3u8_url.strip():
+            xbmc.log(f"MovieStream: Using M3U8 URL for {title}", xbmc.LOGINFO)
+            play_resolved_url(m3u8_url, movie_data, resume_point)
+            return
+        
+        # PRIORITY 3: Try direct video URL (if available)
+        video_url = movie_data.get('video_url')
+        if video_url and video_url.strip():
+            xbmc.log(f"MovieStream: Using direct video URL for {title}", xbmc.LOGINFO)
+            play_resolved_url(video_url, movie_data, resume_point)
+            return
+        
+        # No sources found anywhere
+        xbmc.log(f"MovieStream: No playable sources found for {title}", xbmc.LOGWARNING)
+        
+        # Show detailed error message
+        error_msg = f'No sources found for {title}\n\n'
+        if not cocoscrapers_client or not cocoscrapers_client.is_available():
+            error_msg += 'Cocoscrapers not available.\n'
+        if not addon.getSettingBool('enable_cocoscrapers'):
+            error_msg += 'Cocoscrapers disabled in settings.\n'
+        if not movie_data.get('video_url') and not movie_data.get('m3u8_url'):
+            error_msg += 'No direct URLs in database.\n'
+        
+        error_msg += '\nCheck Tools > Cocoscrapers Status'
+        
+        xbmcgui.Dialog().ok('MovieStream - No Sources', error_msg)
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error playing movie: {str(e)}", xbmc.LOGERROR)
+        xbmcgui.Dialog().notification('MovieStream', f'Playback error: {str(e)}', xbmcgui.NOTIFICATION_ERROR)
+
+def get_enhanced_tmdb_details(tmdb_id, media_type):
+    """Get enhanced TMDB details including external IDs"""
+    try:
+        api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
+        
+        if media_type == 'movie':
+            url = f'https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
+        else:
+            url = f'https://api.themoviedb.org/3/tv/{tmdb_id}?api_key={api_key}&append_to_response=external_ids'
+        
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        
+        enhanced_data = {}
+        if 'external_ids' in data:
+            enhanced_data['imdb_id'] = data['external_ids'].get('imdb_id')
+            enhanced_data['tvdb_id'] = data['external_ids'].get('tvdb_id')
+        
+        return enhanced_data
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error getting enhanced TMDB details: {str(e)}", xbmc.LOGERROR)
+        return {}
         
         # No sources found
         xbmc.log(f"MovieStream: No playable sources found for {title}", xbmc.LOGWARNING)
