@@ -1049,3 +1049,81 @@ if __name__ == '__main__':
     except Exception as e:
         xbmc.log(f"MovieStream: Main execution error: {str(e)}", xbmc.LOGERROR)
         xbmcgui.Dialog().notification('MovieStream', 'Addon startup error', xbmcgui.NOTIFICATION_ERROR)
+
+def test_cocoscrapers_scraping():
+    """Test Cocoscrapers with a known movie"""
+    try:
+        if not cocoscrapers_client or not cocoscrapers_client.is_available():
+            xbmcgui.Dialog().ok('Cocoscrapers Test', '❌ Cocoscrapers not available!\n\nInstall script.module.cocoscrapers first.')
+            return
+        
+        # Test with a popular movie
+        test_movie = {
+            'title': 'Avatar',
+            'year': '2009',
+            'tmdb_id': '19995',
+            'imdb_id': 'tt0499549'
+        }
+        
+        progress = xbmcgui.DialogProgress()
+        progress.create('Testing Cocoscrapers', 'Testing with Avatar (2009)...')
+        progress.update(0)
+        
+        sources = cocoscrapers_client.scrape_movie_sources(
+            title=test_movie['title'],
+            year=test_movie['year'],
+            tmdb_id=test_movie['tmdb_id'],
+            imdb_id=test_movie['imdb_id']
+        )
+        
+        progress.close()
+        
+        if sources:
+            message = f"✅ Cocoscrapers Working!\n\n"
+            message += f"Test Movie: {test_movie['title']} ({test_movie['year']})\n"
+            message += f"Sources Found: {len(sources)}\n\n"
+            message += "Sample sources:\n"
+            for i, source in enumerate(sources[:3]):
+                message += f"• {source.get('provider', 'Unknown')} ({source.get('quality', 'Unknown')})\n"
+        else:
+            message = f"⚠️ Cocoscrapers Loaded but No Sources\n\n"
+            message += f"Test Movie: {test_movie['title']} ({test_movie['year']})\n"
+            message += "This could be due to:\n"
+            message += "• No active scrapers\n"
+            message += "• Network issues\n"
+            message += "• Regional restrictions\n\n"
+            message += "Try different content or check scraper settings."
+        
+        xbmcgui.Dialog().ok('Cocoscrapers Test Results', message)
+        
+    except Exception as e:
+        xbmcgui.Dialog().ok('Cocoscrapers Test Error', f'❌ Test failed!\n\n{str(e)}')
+
+# Add to tools_menu:
+def tools_menu():
+    """Tools submenu"""
+    xbmcplugin.setPluginCategory(plugin_handle, '⚙️ Tools')
+    
+    menu_items = [
+        ('🔍 Test TMDB Connection', 'test_tmdb', ''),
+        ('📁 Test GitHub Connection', 'test_github', ''),
+        ('🎬 Cocoscrapers Status', 'cocoscrapers_status', ''),
+        ('🧪 Test Cocoscrapers Scraping', 'test_cocoscrapers_scraping', ''),  # NEW
+        ('💎 Debrid Account Status', 'debrid_status', ''),
+        ('📊 Addon Statistics', 'addon_stats', ''),
+        ('🗑️ Clear All Cache', 'clear_cache', ''),
+        ('ℹ️ Addon Information', 'addon_info', '')
+    ]
+    
+    for name, action, param in menu_items:
+        list_item = xbmcgui.ListItem(label=name)
+        list_item.setArt({'thumb': 'DefaultAddonProgram.png'})
+        
+        url = get_url(action=action)
+        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
+    
+    xbmcplugin.endOfDirectory(plugin_handle)
+
+# Add to router:
+elif action == 'test_cocoscrapers_scraping':
+    test_cocoscrapers_scraping()
