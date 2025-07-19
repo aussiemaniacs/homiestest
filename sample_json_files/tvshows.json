@@ -5,11 +5,11 @@
     "first_air_date": "2008-01-01",
     "genre": "Animation, Adventure, Comedy",
     "rating": 8.5,
-    "plot": "A collection of animated shorts featuring various characters and stories.",
-    "creator": "Animation Studio",
+    "plot": "A collection of animated shorts featuring various characters and stories from the Blender open movie projects.",
+    "creator": "Blender Animation Studio",
     "cast": ["Voice Actor One", "Voice Actor Two", "Voice Actor Three"],
     "poster_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
-    "backdrop_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+    "backdrop_url": "https://peach.blender.org/wp-content/uploads/poster_bunny_bunny.jpg",
     "tmdb_id": 99999,
     "seasons": [
       {
@@ -22,6 +22,7 @@
             "plot": "A large and lovable rabbit deals with three tiny bullies.",
             "runtime": 10,
             "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en",
@@ -35,6 +36,7 @@
             "plot": "Two men exploring a strange industrial world.",
             "runtime": 11,
             "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en",
@@ -48,6 +50,7 @@
             "plot": "A lonely young woman helps and befriends a dragon.",
             "runtime": 15,
             "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en", 
@@ -63,10 +66,11 @@
         "episodes": [
           {
             "episode_number": 1,
-            "title": "New Adventures Begin",
-            "plot": "Our heroes embark on new exciting adventures.",
+            "title": "Tears of Steel",
+            "plot": "Futuristic action drama in post-apocalyptic Amsterdam.",
             "runtime": 12,
-            "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en",
@@ -80,6 +84,7 @@
             "plot": "The epic conclusion to our adventure series.",
             "runtime": 18,
             "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en",
@@ -97,11 +102,11 @@
     "first_air_date": "2020-03-15",
     "genre": "Documentary, Technology",
     "rating": 9.2,
-    "plot": "An in-depth look at modern technology and its impact on society.",
+    "plot": "An in-depth look at modern technology and its impact on society through various documentary episodes.",
     "creator": "Tech Productions",
     "cast": ["Narrator One", "Expert Two", "Analyst Three"],
     "poster_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_trailer_400p.png",
-    "backdrop_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_trailer_400p.png",
+    "backdrop_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel-wallpaper-dragonfight.jpg",
     "tmdb_id": 99998,
     "seasons": [
       {
@@ -114,6 +119,7 @@
             "plot": "How digital technology transformed our world.",
             "runtime": 45,
             "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en",
@@ -127,6 +133,7 @@
             "plot": "Current state and future of AI technology.",
             "runtime": 42,
             "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en",
@@ -140,6 +147,7 @@
             "plot": "What lies ahead for computer technology.",
             "runtime": 48,
             "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "m3u8_url": "",
             "subtitles": [
               {
                 "language": "en",
