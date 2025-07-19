@@ -1,0 +1,110 @@
+[
+  {
+    "id": "movie_001",
+    "title": "Big Buck Bunny",
+    "year": 2008,
+    "genre": "Animation, Comedy, Family",
+    "rating": 7.8,
+    "plot": "A large and lovable rabbit deals with three tiny bullies, led by a flying squirrel, who are determined to squelch his happiness.",
+    "director": "Sacha Goedegebure",
+    "cast": ["Frank Pelle", "Mauricio Baiocchi", "Ton Roosendaal"],
+    "runtime": 10,
+    "poster_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
+    "backdrop_url": "https://peach.blender.org/wp-content/uploads/poster_bunny_bunny.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    "trailer_url": "https://www.youtube.com/watch?v=YE7VzlLtp-4",
+    "subtitles": [
+      {
+        "language": "en",
+        "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+      }
+    ],
+    "quality": "1080p",
+    "file_size": "158MB",
+    "added_date": "2024-01-15",
+    "tmdb_id": 10378,
+    "m3u8_url": "",
+    "custom_sources": []
+  },
+  {
+    "id": "movie_002",
+    "title": "Elephant's Dream",
+    "year": 2006,
+    "genre": "Animation, Drama, Fantasy",
+    "rating": 6.9,
+    "plot": "Two men explore a strange industrial world populated by mechanical creatures.",
+    "director": "Bassam Kurdali",
+    "cast": ["Cas Jansen", "Tygo Gernandt"],
+    "runtime": 11,
+    "poster_url": "https://orange.blender.org/wp-content/themes/orange/images/media/gallery/s5_proog.jpg",
+    "backdrop_url": "https://orange.blender.org/wp-content/themes/orange/images/media/gallery/s1_proog.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    "trailer_url": "https://www.youtube.com/watch?v=TLkA0RELQ1g",
+    "subtitles": [
+      {
+        "language": "en",
+        "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+      }
+    ],
+    "quality": "720p",
+    "file_size": "64MB",
+    "added_date": "2024-01-16",
+    "tmdb_id": 45162,
+    "m3u8_url": "",
+    "custom_sources": []
+  },
+  {
+    "id": "movie_003",
+    "title": "Sintel",
+    "year": 2010,
+    "genre": "Animation, Adventure, Fantasy",
+    "rating": 8.0,
+    "plot": "A lonely young woman, Sintel, helps and befriends a dragon, whom she calls Scales. But when he is kidnapped by an adult dragon, Sintel decides to embark on a dangerous quest to find her lost friend Scales.",
+    "director": "Colin Levy",
+    "cast": ["Halina Reijn", "Thom Hoffman"],
+    "runtime": 15,
+    "poster_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel_trailer_400p.png",
+    "backdrop_url": "https://durian.blender.org/wp-content/uploads/2010/05/sintel-wallpaper-dragonfight.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    "trailer_url": "https://www.youtube.com/watch?v=eRsGyueVLvQ",
+    "subtitles": [
+      {
+        "language": "en",
+        "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+      }
+    ],
+    "quality": "1080p",
+    "file_size": "173MB",
+    "added_date": "2024-01-17",
+    "tmdb_id": 45164,
+    "m3u8_url": "",
+    "custom_sources": []
+  },
+  {
+    "id": "movie_004",
+    "title": "Tears of Steel",
+    "year": 2012,
+    "genre": "Action, Drama, Sci-Fi",
+    "rating": 7.1,
+    "plot": "In an apocalyptic future, a group of soldiers and civilians struggle against robot forces in Amsterdam.",
+    "director": "Ian Hubert",
+    "cast": ["Derek de Lint", "Berenice Bejo", "Sergio Hasselbaink"],
+    "runtime": 12,
+    "poster_url": "https://mango.blender.org/wp-content/themes/mango/images/media/gallery/c06_comp_001040.jpg",
+    "backdrop_url": "https://mango.blender.org/wp-content/themes/mango/images/media/gallery/c04_comp_000937.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+    "trailer_url": "https://www.youtube.com/watch?v=R6MlUcmOul8",
+    "subtitles": [
+      {
+        "language": "en",
+        "url": "https://gist.githubusercontent.com/samdutton/ca37f3adaf4e23679957b8083e061177/raw/e19399fbccbc069a2af4266e5120ae6bad62699a/sample.vtt"
+      }
+    ],
+    "quality": "1080p",
+    "file_size": "734MB",
+    "added_date": "2024-01-18",
+    "tmdb_id": 45165,
+    "m3u8_url": "",
+    "custom_sources": []
+  }
+]
