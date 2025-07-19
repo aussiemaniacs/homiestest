@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<addon id="plugin.video.moviestream"
+
+name="MovieStream"
+
+version="1.0.0"
+
+provider-name="MovieStream Team">
+
+<requires>
+
+<import addon="xbmc.python" version="3.0.0"/>
+
+<import addon="script.module.requests" version="2.25.1"/>
+
+</requires>
+
+<extension point="xbmc.python.pluginsource" library="main.py">
+
+<provides>video</provides>
+
+</extension>
+
+<extension point="xbmc.addon.metadata">
+
+<summary lang="en_GB">Stream movies and TV shows with metadata from TMDB and GitHub</summary>
+
+<description lang="en_GB">A comprehensive Kodi addon that plays video links and fetches metadata from TMDB. Supports custom JSON files on GitHub for movie information management. Features include movie/TV show streaming, automatic metadata fetching, artwork downloading, and GitHub integration for editable movie databases. we dont host any video files, any complaints please contact the file/video hoster.</description>
+
+<platform>all</platform>
+
+<license>MIT</license>
+
+<website>https://github.com</website>
+
+<source>https://github.com</source>
+
+<news>Initial release with TMDB integration and GitHub JSON support</news>
+
+<assets>
+
+<icon>icon.png</icon>
+
+<fanart>fanart.jpg</fanart>
+
+</assets>
+
+</extension>
+
+</addon>
