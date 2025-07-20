@@ -112,6 +112,10 @@ def list_categories():
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
+def show_error_message(message):
+    """Show error message to user"""
+    xbmcgui.Dialog().notification('MovieStream Error', message, xbmcgui.NOTIFICATION_ERROR)
+
 def list_movies(page=1):
     """List popular movies from TMDB"""
     xbmcplugin.setPluginCategory(plugin_handle, 'Movies')
