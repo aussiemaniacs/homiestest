@@ -55,17 +55,45 @@ github_client = None
 video_player = None
 streaming_providers = None
 
-# Always try to initialize basic clients first
+# Try to initialize basic clients first
 try:
-    tmdb_client = TMDBClient()
-    github_client = GitHubClient()
-    video_player = VideoPlayer()
-    streaming_providers = StreamingProviders()
-    BASIC_CLIENTS_READY = True
-    xbmc.log("MovieStream: Basic clients initialized successfully", xbmc.LOGINFO)
+    if 'TMDBClient' in globals():
+        tmdb_client = TMDBClient()
+        xbmc.log("MovieStream: TMDB client initialized", xbmc.LOGINFO)
+    else:
+        xbmc.log("MovieStream: TMDBClient not available", xbmc.LOGWARNING)
 except Exception as e:
-    xbmc.log(f"MovieStream: Basic client initialization error: {str(e)}", xbmc.LOGERROR)
-    BASIC_CLIENTS_READY = False
+    xbmc.log(f"MovieStream: TMDB client init error: {str(e)}", xbmc.LOGERROR)
+
+try:
+    if 'GitHubClient' in globals():
+        github_client = GitHubClient()
+        xbmc.log("MovieStream: GitHub client initialized", xbmc.LOGINFO)
+    else:
+        xbmc.log("MovieStream: GitHubClient not available", xbmc.LOGWARNING)
+except Exception as e:
+    xbmc.log(f"MovieStream: GitHub client init error: {str(e)}", xbmc.LOGERROR)
+
+try:
+    if 'VideoPlayer' in globals():
+        video_player = VideoPlayer()
+        xbmc.log("MovieStream: Video player initialized", xbmc.LOGINFO)
+    else:
+        xbmc.log("MovieStream: VideoPlayer not available", xbmc.LOGWARNING)
+except Exception as e:
+    xbmc.log(f"MovieStream: Video player init error: {str(e)}", xbmc.LOGERROR)
+
+try:
+    if 'StreamingProviders' in globals():
+        streaming_providers = StreamingProviders()
+        xbmc.log("MovieStream: Streaming providers initialized", xbmc.LOGINFO)
+    else:
+        xbmc.log("MovieStream: StreamingProviders not available", xbmc.LOGWARNING)
+except Exception as e:
+    xbmc.log(f"MovieStream: Streaming providers init error: {str(e)}", xbmc.LOGERROR)
+
+# Check if basic functionality is available
+BASIC_CLIENTS_READY = bool(tmdb_client and github_client)
 
 # Try to initialize enhanced clients if imports were successful
 if IMPORTS_SUCCESS:
@@ -79,8 +107,7 @@ if IMPORTS_SUCCESS:
     except Exception as e:
         xbmc.log(f"MovieStream: Enhanced client initialization error: {str(e)}", xbmc.LOGERROR)
         CLIENTS_INITIALIZED = False
-        # Enhanced clients failed, but basic clients should still work
-        xbmc.log("MovieStream: Running in basic mode", xbmc.LOGINFO)
+        xbmc.log("MovieStream: Running in basic mode only", xbmc.LOGINFO)
 else:
     CLIENTS_INITIALIZED = False
     xbmc.log("MovieStream: Enhanced imports failed - running in basic mode", xbmc.LOGINFO)
