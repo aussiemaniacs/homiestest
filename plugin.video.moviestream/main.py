@@ -682,19 +682,115 @@ def play_episode(show_id, season_number, episode_number):
         else:
             xbmcgui.Dialog().notification('MovieStream', 'No video source found', xbmcgui.NOTIFICATION_WARNING)
 
-def play_github_movie(movie_data):
-    """Play a movie from GitHub collection"""
+def test_movie_playback():
+    """Test movie playback with sample movie"""
     try:
-        movie = json.loads(movie_data)
-        video_url = movie.get('video_url')
+        # Create test movie data
+        test_movie = {
+            'title': 'Big Buck Bunny',
+            'year': '2008',
+            'tmdb_id': '10378',
+            'imdb_id': 'tt1254207',
+            'type': 'movie',
+            'plot': 'Test movie for MovieStream playback functionality'
+        }
         
-        if video_url:
-            player = VideoPlayer()
-            player.play_video(video_url, movie)
-        else:
-            xbmcgui.Dialog().notification('MovieStream', 'No video URL found', xbmcgui.NOTIFICATION_WARNING)
+        xbmcgui.Dialog().notification('MovieStream', 'Testing movie playback...', xbmcgui.NOTIFICATION_INFO)
+        play_movie(json.dumps(test_movie))
+        
     except Exception as e:
-        xbmc.log(f"MovieStream: Error playing GitHub movie: {str(e)}", xbmc.LOGERROR)
+        xbmc.log(f"MovieStream: Test playback error: {str(e)}", xbmc.LOGERROR)
+        xbmcgui.Dialog().ok('Test Error', f'Test failed: {str(e)}')
+
+def debug_info():
+    """Show comprehensive debug information"""
+    try:
+        # Collect debug information
+        info = []
+        info.append(f"Addon: {addon.getAddonInfo('name')} v{addon.getAddonInfo('version')}")
+        info.append(f"Clients Initialized: {'Yes' if CLIENTS_INITIALIZED else 'No'}")
+        info.append(f"Imports Success: {'Yes' if IMPORTS_SUCCESS else 'No'}")
+        
+        if CLIENTS_INITIALIZED:
+            info.append(f"Cocoscrapers Available: {'Yes' if cocoscrapers_client.is_available() else 'No'}")
+            info.append(f"Debrid Available: {'Yes' if debrid_client.is_available() else 'No'}")
+            
+            # Cocoscrapers status
+            if cocoscrapers_client.is_available():
+                try:
+                    stats = cocoscrapers_client.get_scraper_stats()
+                    info.append(f"Total Scrapers: {stats.get('total_scrapers', 'Unknown')}")
+                    info.append(f"Enabled Scrapers: {stats.get('enabled_scrapers', 'Unknown')}")
+                except:
+                    info.append("Cocoscrapers: Stats unavailable")
+        
+        # Settings
+        info.append(f"Enable Cocoscrapers: {addon.getSettingBool('enable_cocoscrapers')}")
+        info.append(f"Auto Play Best: {addon.getSettingBool('auto_play_best_source')}")
+        info.append(f"Scraper Timeout: {addon.getSetting('scraper_timeout')}s")
+        info.append(f"TMDB API Key: {'Set' if addon.getSetting('tmdb_api_key') else 'Not Set'}")
+        info.append(f"GitHub URL: {addon.getSetting('github_repo_url')[:50]}...")
+        
+        debug_message = '\n'.join(info)
+        xbmcgui.Dialog().textviewer('MovieStream Debug Info', debug_message)
+        
+    except Exception as e:
+        xbmcgui.Dialog().ok('Debug Error', f'Error collecting debug info: {str(e)}')
+
+def cocoscrapers_status():
+    """Show detailed Cocoscrapers status"""
+    try:
+        if not CLIENTS_INITIALIZED:
+            message = "❌ Clients Not Initialized\n\n"
+            message += "The addon failed to initialize properly.\n"
+            message += "Check the Kodi log for import errors."
+        elif cocoscrapers_client.is_available():
+            stats = cocoscrapers_client.get_scraper_stats()
+            message = f"✅ Cocoscrapers Available\n\n"
+            message += f"Total Scrapers: {stats.get('total_scrapers', 'Unknown')}\n"
+            message += f"Enabled Scrapers: {stats.get('enabled_scrapers', 'Unknown')}\n"
+            message += f"Timeout Setting: {addon.getSetting('scraper_timeout')}s\n"
+            message += f"Max Sources: {addon.getSetting('max_sources')}\n\n"
+            message += "Cocoscrapers is ready to find streaming sources."
+        else:
+            message = "❌ Cocoscrapers Not Available\n\n"
+            message += "To use Cocoscrapers:\n"
+            message += "1. Install 'script.module.cocoscrapers' addon\n"
+            message += "2. Install 'script.module.resolveurl' addon (optional)\n"
+            message += "3. Restart MovieStream addon\n\n"
+            message += "Without Cocoscrapers, only GitHub collection videos will play."
+        
+        xbmcgui.Dialog().ok('Cocoscrapers Status', message)
+        
+    except Exception as e:
+        xbmcgui.Dialog().ok('Status Error', f'Error checking Cocoscrapers: {str(e)}')
+
+def debrid_status():
+    """Show debrid services status"""
+    try:
+        if not CLIENTS_INITIALIZED or not debrid_client.is_available():
+            message = "❌ No Debrid Services Configured\n\n"
+            message += "Available services:\n"
+            message += "• Real-Debrid\n"
+            message += "• Premiumize\n"
+            message += "• All-Debrid\n\n"
+            message += "Configure API keys in Settings to enable premium links."
+        else:
+            status = debrid_client.check_account_status()
+            message = "💎 Debrid Services Status\n\n"
+            
+            for service, info in status.items():
+                if info:
+                    message += f"{info.get('service', service)}: ✅ Active\n"
+                    message += f"User: {info.get('username', 'N/A')}\n"
+                    message += f"Premium: {'Yes' if info.get('premium', False) else 'No'}\n\n"
+                else:
+                    message += f"{service}: ❌ Error or Not Configured\n\n"
+        
+        xbmcgui.Dialog().ok('Debrid Status', message)
+        
+    except Exception as e:
+        xbmcgui.Dialog().ok('Status Error', f'Error checking debrid services: {str(e)}')
 
 def get_video_url_for_movie(movie_details):
     """Get video URL for a movie using multiple providers"""
@@ -914,13 +1010,19 @@ def router(paramstring):
         elif action == 'show_episodes':
             show_episodes(params.get('show_id'), params.get('season_number'))
         elif action == 'play_movie':
-            play_movie(params.get('movie_id'))
+            play_movie(params.get('movie_data'))
         elif action == 'play_episode':
             play_episode(params.get('show_id'), params.get('season_number'), params.get('episode_number'))
         elif action == 'github_collection':
             github_collection()
-        elif action == 'play_github_movie':
-            play_github_movie(params.get('movie_data'))
+        elif action == 'test_movie_playback':
+            test_movie_playback()
+        elif action == 'debug_info':
+            debug_info()
+        elif action == 'cocoscrapers_status':
+            cocoscrapers_status()
+        elif action == 'debrid_status':
+            debrid_status()
         elif action == 'streaming_providers':
             streaming_providers()
         elif action == 'subtitle_manager':
