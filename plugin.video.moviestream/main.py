@@ -383,34 +383,33 @@ def show_episodes(show_id, season_number):
         xbmcplugin.endOfDirectory(plugin_handle)
 
 def github_collection():
-    """Show GitHub collection"""
-    xbmcplugin.setPluginCategory(plugin_handle, 'GitHub Collection')
+    """Show GitHub collection with enhanced functionality"""
+    xbmcplugin.setPluginCategory(plugin_handle, '📁 GitHub Collection')
     xbmcplugin.setContent(plugin_handle, 'movies')
     
-    github = GitHubClient()
-    collection = github.get_movie_collection()
+    try:
+        if not CLIENTS_INITIALIZED:
+            show_error_message("Client initialization failed")
+            return
+        
+        collection = github_client.get_movie_collection()
+        
+        if collection:
+            for movie in collection:
+                add_movie_item(movie, from_tmdb=False)
+        else:
+            # Show no content message
+            list_item = xbmcgui.ListItem(label='No movies found')
+            list_item.setInfo('video', {'title': 'No Content', 'plot': 'Check your GitHub repository URL in settings'})
+            xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
     
-    if collection:
-        for movie in collection:
-            list_item = xbmcgui.ListItem(label=movie.get('title', 'Unknown'))
-            
-            # Set artwork if available
-            if movie.get('poster_url'):
-                list_item.setArt({'thumb': movie['poster_url'], 'poster': movie['poster_url']})
-            
-            list_item.setInfo('video', {
-                'title': movie.get('title', ''),
-                'year': movie.get('year', 0),
-                'plot': movie.get('plot', ''),
-                'genre': movie.get('genre', ''),
-                'rating': movie.get('rating', 0),
-                'mediatype': 'movie'
-            })
-            
-            list_item.setProperty('IsPlayable', 'true')
-            
-            url = get_url(action='play_github_movie', movie_data=json.dumps(movie))
-            xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error loading GitHub collection: {str(e)}", xbmc.LOGERROR)
+        
+        # Show error message
+        list_item = xbmcgui.ListItem(label='❌ Error loading GitHub collection')
+        list_item.setInfo('video', {'title': 'Error', 'plot': f'Error: {str(e)}\nCheck GitHub repository URL in settings'})
+        xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
