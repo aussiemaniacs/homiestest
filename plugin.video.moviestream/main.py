@@ -737,7 +737,7 @@ def play_resolved_url(url, item_data):
                 xbmc.log(f"MovieStream: History add error: {str(e)}", xbmc.LOGWARNING)
         
         # Set resolved URL for Kodi
-        xbmcplugin.setResolvedURL(plugin_handle, True, list_item)
+        xbmcplugin.setResolvedUrl(plugin_handle, True, list_item)
         xbmc.log("MovieStream: Successfully set resolved URL", xbmc.LOGINFO)
         
     except Exception as e:
