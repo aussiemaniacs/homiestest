@@ -999,32 +999,53 @@ def debug_info():
     try:
         # Collect debug information
         info = []
+        info.append(f"=== MovieStream Pro Debug Info ===")
         info.append(f"Addon: {addon.getAddonInfo('name')} v{addon.getAddonInfo('version')}")
-        info.append(f"Clients Initialized: {'Yes' if CLIENTS_INITIALIZED else 'No'}")
-        info.append(f"Imports Success: {'Yes' if IMPORTS_SUCCESS else 'No'}")
+        info.append(f"")
+        info.append(f"=== Initialization Status ===")
+        info.append(f"Enhanced Imports Success: {'Yes' if IMPORTS_SUCCESS else 'No'}")
+        info.append(f"Basic Clients Ready: {'Yes' if BASIC_CLIENTS_READY else 'No'}")
+        info.append(f"Enhanced Clients Ready: {'Yes' if CLIENTS_INITIALIZED else 'No'}")
+        info.append(f"")
+        info.append(f"=== Client Status ===")
+        info.append(f"TMDB Client: {'✅ Ready' if tmdb_client else '❌ Failed'}")
+        info.append(f"GitHub Client: {'✅ Ready' if github_client else '❌ Failed'}")
+        info.append(f"Video Player: {'✅ Ready' if video_player else '❌ Failed'}")
+        info.append(f"Streaming Providers: {'✅ Ready' if streaming_providers else '❌ Failed'}")
+        info.append(f"")
         
         if CLIENTS_INITIALIZED:
-            info.append(f"Cocoscrapers Available: {'Yes' if cocoscrapers_client.is_available() else 'No'}")
-            info.append(f"Debrid Available: {'Yes' if debrid_client.is_available() else 'No'}")
+            info.append(f"=== Enhanced Clients ===")
+            info.append(f"Cocoscrapers: {'✅ Available' if cocoscrapers_client and cocoscrapers_client.is_available() else '❌ Not Available'}")
+            info.append(f"Debrid Services: {'✅ Available' if debrid_client and debrid_client.is_available() else '❌ Not Available'}")
+            info.append(f"TV Show Client: {'✅ Ready' if tvshow_client else '❌ Failed'}")
+            info.append(f"Watchlist Manager: {'✅ Ready' if watchlist_manager else '❌ Failed'}")
+            info.append(f"")
             
-            # Cocoscrapers status
-            if cocoscrapers_client.is_available():
+            # Cocoscrapers detailed info
+            if cocoscrapers_client and cocoscrapers_client.is_available():
                 try:
                     stats = cocoscrapers_client.get_scraper_stats()
+                    info.append(f"=== Cocoscrapers Details ===")
                     info.append(f"Total Scrapers: {stats.get('total_scrapers', 'Unknown')}")
                     info.append(f"Enabled Scrapers: {stats.get('enabled_scrapers', 'Unknown')}")
+                    info.append(f"")
                 except:
-                    info.append("Cocoscrapers: Stats unavailable")
+                    info.append(f"Cocoscrapers: Stats unavailable")
+                    info.append(f"")
         
-        # Settings
+        info.append(f"=== Settings ===")
         info.append(f"Enable Cocoscrapers: {addon.getSettingBool('enable_cocoscrapers')}")
         info.append(f"Auto Play Best: {addon.getSettingBool('auto_play_best_source')}")
         info.append(f"Scraper Timeout: {addon.getSetting('scraper_timeout')}s")
-        info.append(f"TMDB API Key: {'Set' if addon.getSetting('tmdb_api_key') else 'Not Set'}")
-        info.append(f"GitHub URL: {addon.getSetting('github_repo_url')[:50]}...")
+        info.append(f"TMDB API Key: {'✅ Set' if addon.getSetting('tmdb_api_key') else '❌ Not Set'}")
+        github_url = addon.getSetting('github_repo_url')
+        info.append(f"GitHub URL: {'✅ Set' if github_url else '❌ Not Set'}")
+        if github_url:
+            info.append(f"  {github_url[:60]}...")
         
         debug_message = '\n'.join(info)
-        xbmcgui.Dialog().textviewer('MovieStream Debug Info', debug_message)
+        xbmcgui.Dialog().textviewer('MovieStream Pro - Debug Information', debug_message)
         
     except Exception as e:
         xbmcgui.Dialog().ok('Debug Error', f'Error collecting debug info: {str(e)}')
