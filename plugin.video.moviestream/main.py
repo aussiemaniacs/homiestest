@@ -162,43 +162,81 @@ def list_tv_shows(page=1):
     xbmcplugin.endOfDirectory(plugin_handle)
 
 def add_movie_item(movie, from_tmdb=False):
-    """Add a movie item to the directory"""
+    """Add a movie item to the directory with Cocoscrapers support"""
     title = movie.get('title', 'Unknown Title')
-    year = movie.get('release_date', '')[:4] if movie.get('release_date') else ''
-    plot = movie.get('overview', 'No description available')
+    year = movie.get('release_date', '')[:4] if movie.get('release_date') else movie.get('year', '')
+    plot = movie.get('overview', movie.get('plot', 'No description available'))
     
-    # Build artwork URLs
-    poster_path = movie.get('poster_path')
-    backdrop_path = movie.get('backdrop_path')
-    
-    poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ''
-    fanart_url = f"https://image.tmdb.org/t/p/w1280{backdrop_path}" if backdrop_path else ''
-    
-    list_item = xbmcgui.ListItem(label=f"{title} ({year})" if year else title)
+    # Create display title
+    display_title = f"{title} ({year})" if year else title
+    list_item = xbmcgui.ListItem(label=display_title)
     
     # Set artwork
-    list_item.setArt({
-        'thumb': poster_url,
-        'poster': poster_url,
-        'fanart': fanart_url,
-        'landscape': fanart_url
-    })
+    if from_tmdb:
+        poster_path = movie.get('poster_path')
+        backdrop_path = movie.get('backdrop_path')
+        
+        poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}" if poster_path else ''
+        fanart_url = f"https://image.tmdb.org/t/p/w1280{backdrop_path}" if backdrop_path else ''
+        
+        if poster_url:
+            list_item.setArt({'thumb': poster_url, 'poster': poster_url})
+        if fanart_url:
+            list_item.setArt({'fanart': fanart_url, 'landscape': fanart_url})
+    else:
+        # GitHub/custom sources
+        if movie.get('poster_url'):
+            list_item.setArt({'thumb': movie['poster_url'], 'poster': movie['poster_url']})
+        if movie.get('backdrop_url'):
+            list_item.setArt({'fanart': movie['backdrop_url']})
     
     # Set video info
-    list_item.setInfo('video', {
+    info_dict = {
         'title': title,
-        'year': int(year) if year.isdigit() else 0,
         'plot': plot,
-        'genre': ', '.join([g['name'] for g in movie.get('genre_ids', [])]) if movie.get('genre_ids') else '',
-        'rating': movie.get('vote_average', 0),
+        'year': int(year) if str(year).isdigit() else 0,
+        'genre': movie.get('genre', ''),
+        'rating': float(movie.get('vote_average', movie.get('rating', 0))),
         'votes': str(movie.get('vote_count', 0)),
+        'director': movie.get('director', ''),
         'mediatype': 'movie'
-    })
+    }
+    list_item.setInfo('video', info_dict)
     
-    # Set as playable
+    # Set as playable - CRITICAL for Kodi to recognize as playable item
     list_item.setProperty('IsPlayable', 'true')
     
-    url = get_url(action='play_movie', movie_id=movie.get('id'))
+    # Create movie data for playback
+    movie_data = {
+        'title': title,
+        'year': str(year),
+        'tmdb_id': str(movie.get('id', movie.get('tmdb_id', ''))),
+        'imdb_id': movie.get('imdb_id', ''),
+        'type': 'movie',
+        'poster_url': movie.get('poster_url', ''),
+        'plot': plot,
+        'video_url': movie.get('video_url', ''),  # For GitHub collection
+        'm3u8_url': movie.get('m3u8_url', '')     # For M3U8 streams
+    }
+    
+    # Add context menu items if watchlist is available
+    if CLIENTS_INITIALIZED and hasattr(watchlist_manager, 'get_context_menu_items'):
+        try:
+            context_items = watchlist_manager.get_context_menu_items(movie_data)
+            
+            # Add source selection context menu
+            if cocoscrapers_client.is_available():
+                context_items.append((
+                    'Select Source',
+                    f'RunPlugin({get_url(action="select_movie_source", movie_data=json.dumps(movie_data))})'
+                ))
+            
+            list_item.addContextMenuItems(context_items)
+        except Exception as e:
+            xbmc.log(f"MovieStream: Context menu error: {str(e)}", xbmc.LOGWARNING)
+    
+    # Set playback URL - This is crucial for triggering play_movie action
+    url = get_url(action='play_movie', movie_data=json.dumps(movie_data))
     xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
 
 def add_tv_show_item(show):
