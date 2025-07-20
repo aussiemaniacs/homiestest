@@ -95,7 +95,7 @@ def list_categories():
     xbmcplugin.setContent(plugin_handle, 'videos')
     
     # Check Cocoscrapers status for display
-    cocoscrapers_status = "✅" if CLIENTS_INITIALIZED and cocoscrapers_client.is_available() else "❌"
+    cocoscrapers_status = "✅" if CLIENTS_INITIALIZED and cocoscrapers_client and cocoscrapers_client.is_available() else "❌"
     
     categories = [
         (f'🎬 Movies', 'movies_menu', 'DefaultMovies.png'),
@@ -119,7 +119,12 @@ def list_categories():
         xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, is_folder)
     
     # Add status info at the bottom
-    status_info = f"Cocoscrapers: {cocoscrapers_status} | Status: {'Ready' if CLIENTS_INITIALIZED else 'Limited Mode'}"
+    if BASIC_CLIENTS_READY:
+        status_mode = 'Pro Mode' if CLIENTS_INITIALIZED else 'Basic Mode'
+        status_info = f"Cocoscrapers: {cocoscrapers_status} | Status: {status_mode} ✅"
+    else:
+        status_info = f"Status: Error - Check Settings ❌"
+    
     list_item = xbmcgui.ListItem(label=f"ℹ️ {status_info}")
     list_item.setArt({'thumb': 'DefaultAddonProgram.png'})
     list_item.setInfo('video', {'title': status_info, 'plot': 'Addon status information'})
