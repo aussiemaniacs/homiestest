@@ -414,22 +414,148 @@ def github_collection():
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
-def play_movie(movie_id):
-    """Play a movie"""
-    # Get movie details from TMDB
-    tmdb = TMDBClient()
-    movie_details = tmdb.get_movie_details(movie_id)
+def play_movie(movie_data_str):
+    """Play a movie with Cocoscrapers integration - PRIORITY 1"""
+    xbmc.log("MovieStream: PLAY_MOVIE CALLED", xbmc.LOGINFO)
     
-    if movie_details:
-        # For demo purposes, we'll use a sample video URL
-        # In real implementation, you would have your video sources
-        video_url = get_video_url_for_movie(movie_details)
+    try:
+        movie_data = json.loads(movie_data_str)
+        xbmc.log(f"MovieStream: Movie data received: {movie_data.get('title', 'Unknown')}", xbmc.LOGINFO)
         
-        if video_url:
-            player = VideoPlayer()
-            player.play_video(video_url, movie_details)
-        else:
-            xbmcgui.Dialog().notification('MovieStream', 'No video source found', xbmcgui.NOTIFICATION_WARNING)
+        # Show immediate feedback to user
+        xbmcgui.Dialog().notification('MovieStream', f'Loading {movie_data.get("title", "movie")}...', xbmcgui.NOTIFICATION_INFO, 2000)
+        
+        # PRIORITY 1: Try Cocoscrapers (if enabled and available)
+        if (CLIENTS_INITIALIZED and 
+            addon.getSettingBool('enable_cocoscrapers') and 
+            cocoscrapers_client.is_available()):
+            
+            xbmc.log("MovieStream: Using Cocoscrapers (PRIORITY 1)", xbmc.LOGINFO)
+            
+            try:
+                # Get IMDB ID for better scraping results
+                imdb_id = movie_data.get('imdb_id', '')
+                if not imdb_id and movie_data.get('tmdb_id'):
+                    # Try to get IMDB ID from TMDB
+                    try:
+                        movie_details = tmdb_client.get_movie_details(movie_data['tmdb_id'])
+                        if movie_details and movie_details.get('imdb_id'):
+                            imdb_id = movie_details['imdb_id']
+                            xbmc.log(f"MovieStream: Retrieved IMDB ID: {imdb_id}", xbmc.LOGINFO)
+                    except Exception as e:
+                        xbmc.log(f"MovieStream: Error getting IMDB ID: {str(e)}", xbmc.LOGWARNING)
+                
+                # Scrape sources with Cocoscrapers
+                sources = cocoscrapers_client.scrape_movie_sources(
+                    title=movie_data['title'],
+                    year=movie_data['year'],
+                    tmdb_id=movie_data.get('tmdb_id'),
+                    imdb_id=imdb_id
+                )
+                
+                if sources:
+                    xbmc.log(f"MovieStream: Found {len(sources)} sources via Cocoscrapers", xbmc.LOGINFO)
+                    
+                    # Filter with debrid services if available
+                    if CLIENTS_INITIALIZED and debrid_client.is_available():
+                        sources = debrid_client.filter_debrid_sources(sources)
+                        xbmc.log(f"MovieStream: After debrid filtering: {len(sources)} sources", xbmc.LOGINFO)
+                    
+                    if sources:
+                        # Auto-play best source or show selection
+                        if addon.getSettingBool('auto_play_best_source') and sources:
+                            selected_source = sources[0]  # Best source is first
+                            xbmc.log("MovieStream: Auto-playing best source", xbmc.LOGINFO)
+                        else:
+                            selected_source = cocoscrapers_client.show_source_selection(sources, movie_data['title'])
+                        
+                        if selected_source:
+                            # Resolve source
+                            resolved_url = cocoscrapers_client.resolve_source(selected_source)
+                            
+                            if resolved_url:
+                                xbmc.log(f"MovieStream: Successfully resolved URL via Cocoscrapers", xbmc.LOGINFO)
+                                play_resolved_url(resolved_url, movie_data)
+                                return
+                            else:
+                                xbmc.log("MovieStream: Failed to resolve Cocoscrapers source", xbmc.LOGWARNING)
+                        else:
+                            xbmc.log("MovieStream: No source selected by user", xbmc.LOGINFO)
+                else:
+                    xbmc.log("MovieStream: No sources found via Cocoscrapers", xbmc.LOGWARNING)
+                    
+            except Exception as e:
+                xbmc.log(f"MovieStream: Cocoscrapers error: {str(e)}", xbmc.LOGERROR)
+        
+        # PRIORITY 2: Try M3U8 URL (for GitHub collection with streaming URLs)
+        if movie_data.get('m3u8_url'):
+            xbmc.log("MovieStream: Using M3U8 URL (PRIORITY 2)", xbmc.LOGINFO)
+            try:
+                play_resolved_url(movie_data['m3u8_url'], movie_data)
+                return
+            except Exception as e:
+                xbmc.log(f"MovieStream: M3U8 playback error: {str(e)}", xbmc.LOGERROR)
+        
+        # PRIORITY 3: Try direct video URL (for GitHub collection)
+        if movie_data.get('video_url'):
+            xbmc.log("MovieStream: Using direct video URL (PRIORITY 3)", xbmc.LOGINFO)
+            try:
+                play_resolved_url(movie_data['video_url'], movie_data)
+                return
+            except Exception as e:
+                xbmc.log(f"MovieStream: Direct URL playback error: {str(e)}", xbmc.LOGERROR)
+        
+        # FALLBACK: Use sample video
+        xbmc.log("MovieStream: All methods failed, using sample video", xbmc.LOGWARNING)
+        xbmcgui.Dialog().notification('MovieStream', 'No sources found - playing sample', xbmcgui.NOTIFICATION_WARNING)
+        play_sample_video()
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Critical error in play_movie: {str(e)}", xbmc.LOGERROR)
+        xbmcgui.Dialog().notification('MovieStream', 'Playback failed', xbmcgui.NOTIFICATION_ERROR)
+        play_sample_video()
+
+def play_resolved_url(url, item_data):
+    """Play a resolved URL with metadata"""
+    try:
+        xbmc.log(f"MovieStream: Playing resolved URL: {url[:50]}...", xbmc.LOGINFO)
+        
+        list_item = xbmcgui.ListItem(label=item_data.get('title', 'Unknown'), path=url)
+        
+        # Set info
+        list_item.setInfo('video', {
+            'title': item_data.get('title', 'Unknown'),
+            'plot': item_data.get('plot', ''),
+            'year': int(item_data.get('year', 0)) if str(item_data.get('year', '')).isdigit() else 0,
+            'mediatype': item_data.get('type', 'video')
+        })
+        
+        # Set artwork
+        if item_data.get('poster_url'):
+            list_item.setArt({'thumb': item_data['poster_url']})
+        
+        # Add to history if available
+        if CLIENTS_INITIALIZED and hasattr(watchlist_manager, 'add_to_history'):
+            try:
+                watchlist_manager.add_to_history(item_data)
+            except Exception as e:
+                xbmc.log(f"MovieStream: History add error: {str(e)}", xbmc.LOGWARNING)
+        
+        # Set resolved URL for Kodi
+        xbmcplugin.setResolvedURL(plugin_handle, True, list_item)
+        xbmc.log("MovieStream: Successfully set resolved URL", xbmc.LOGINFO)
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error playing resolved URL: {str(e)}", xbmc.LOGERROR)
+        xbmcgui.Dialog().notification('MovieStream', 'URL resolution failed', xbmcgui.NOTIFICATION_ERROR)
+
+def play_sample_video():
+    """Play sample video as fallback"""
+    sample_url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+    list_item = xbmcgui.ListItem(label="Sample Video", path=sample_url)
+    list_item.setInfo('video', {'title': 'Sample Video', 'plot': 'Sample video for testing'})
+    xbmcplugin.setResolvedURL(plugin_handle, True, list_item)
+    xbmc.log("MovieStream: Playing sample video", xbmc.LOGINFO)
 
 def play_episode(show_id, season_number, episode_number):
     """Play a TV episode"""
