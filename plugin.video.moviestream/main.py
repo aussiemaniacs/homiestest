@@ -39,11 +39,35 @@ addon = xbmcaddon.Addon()
 addon_id = addon.getAddonInfo('id')
 addon_name = addon.getAddonInfo('name')
 addon_path = addon.getAddonInfo('path')
-addon_profile = xbmcvfs.translatePath(addon.getAddonInfo('profile'))
+addon_profile = addon.getAddonInfo('profile')
 
 # Plugin handle and base URL
 plugin_handle = int(sys.argv[1])
 base_url = sys.argv[0]
+
+# Initialize clients with error handling
+if IMPORTS_SUCCESS:
+    try:
+        cocoscrapers_client = CocoScrapersClient()
+        debrid_client = DebridClient()
+        tvshow_client = TVShowClient()
+        watchlist_manager = WatchlistManager()
+        tmdb_client = TMDBClient()
+        github_client = GitHubClient()
+        video_player = VideoPlayer()
+        streaming_providers = StreamingProviders()
+        CLIENTS_INITIALIZED = True
+        xbmc.log("MovieStream: All clients initialized successfully", xbmc.LOGINFO)
+    except Exception as e:
+        xbmc.log(f"MovieStream: Client initialization error: {str(e)}", xbmc.LOGERROR)
+        CLIENTS_INITIALIZED = False
+        # Initialize basic clients only
+        tmdb_client = TMDBClient()
+        github_client = GitHubClient()
+        video_player = VideoPlayer()
+        streaming_providers = StreamingProviders()
+else:
+    CLIENTS_INITIALIZED = False
 
 def get_url(**kwargs):
     """Create a URL for calling the plugin"""
