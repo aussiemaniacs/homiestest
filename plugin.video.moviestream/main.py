@@ -164,45 +164,63 @@ def show_error_message(message):
     """Show error message to user"""
     xbmcgui.Dialog().notification('MovieStream Error', message, xbmcgui.NOTIFICATION_ERROR)
 
-def list_movies(page=1):
-    """List popular movies from TMDB - Works with basic or enhanced clients"""
-    xbmcplugin.setPluginCategory(plugin_handle, 'Movies')
+def list_movies(page=1, category='popular'):
+    """List movies from TMDB - Fixed to work without client initialization errors"""
+    xbmcplugin.setPluginCategory(plugin_handle, f'Movies - {category.title()}')
     xbmcplugin.setContent(plugin_handle, 'movies')
     
-    # Check if basic TMDB client is available
-    if not tmdb_client:
-        show_error_message("TMDB client not available")
-        return
-    
     try:
-        # Try enhanced client first, fallback to basic API
-        if CLIENTS_INITIALIZED and hasattr(tmdb_client, 'get_popular_movies'):
-            movies = tmdb_client.get_popular_movies(page)
-        else:
-            # Use basic TMDB API directly
-            movies = get_movies_basic_api(page, 'popular')
+        # Use direct TMDB API (more reliable than depending on client initialization)
+        api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
         
-        if movies and movies.get('results'):
-            for movie in movies.get('results', []):
-                add_movie_item(movie, from_tmdb=True)
+        # Map category to TMDB endpoint
+        if category == 'top_rated':
+            url = f'https://api.themoviedb.org/3/movie/top_rated?api_key={api_key}&page={page}'
+        elif category == 'now_playing':
+            url = f'https://api.themoviedb.org/3/movie/now_playing?api_key={api_key}&page={page}'
+        elif category == 'upcoming':
+            url = f'https://api.themoviedb.org/3/movie/upcoming?api_key={api_key}&page={page}'
+        else:  # popular
+            url = f'https://api.themoviedb.org/3/movie/popular?api_key={api_key}&page={page}'
+        
+        xbmc.log(f"MovieStream: Fetching movies from TMDB: {category}, page {page}", xbmc.LOGINFO)
+        
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            movies = response.json()
             
-            # Add next page if available
-            if page < movies.get('total_pages', 1):
-                list_item = xbmcgui.ListItem(label='➡️ Next Page >>')
-                list_item.setArt({'thumb': 'DefaultFolder.png'})
-                url = get_url(action='movies', page=page + 1)
-                xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
+            if movies.get('results'):
+                for movie in movies.get('results', [])[:15]:  # Show 15 per page
+                    add_movie_item(movie, from_tmdb=True)
+                
+                # Add next page if available
+                if page < min(movies.get('total_pages', 1), 10):  # Limit to 10 pages
+                    list_item = xbmcgui.ListItem(label=f'➡️ Next Page ({page + 1}) >>')
+                    list_item.setArt({'thumb': 'DefaultFolder.png'})
+                    url = get_url(action='movies', page=page + 1, category=category)
+                    xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
+                
+                xbmc.log(f"MovieStream: Successfully loaded {len(movies.get('results', []))} movies", xbmc.LOGINFO)
+            else:
+                # Show no results message
+                list_item = xbmcgui.ListItem(label='No movies found')
+                list_item.setInfo('video', {'title': 'No Results', 'plot': 'No movies available for this category'})
+                xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
         else:
-            # Show no results message
-            list_item = xbmcgui.ListItem(label='No movies found')
-            list_item.setInfo('video', {'title': 'No Results', 'plot': 'No movies could be loaded from TMDB'})
-            xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
+            xbmc.log(f"MovieStream: TMDB API error {response.status_code}: {response.text}", xbmc.LOGERROR)
+            show_error_message(f"TMDB API error: {response.status_code}")
         
         xbmcplugin.endOfDirectory(plugin_handle)
         
+    except requests.exceptions.RequestException as e:
+        xbmc.log(f"MovieStream: Network error loading movies: {str(e)}", xbmc.LOGERROR)
+        show_error_message(f"Network error: {str(e)}")
+        xbmcplugin.endOfDirectory(plugin_handle)
     except Exception as e:
         xbmc.log(f"MovieStream: Error loading movies: {str(e)}", xbmc.LOGERROR)
-        show_error_message(f"Failed to load movies: {str(e)}")
+        show_error_message(f"Error loading movies: {str(e)}")
+        xbmcplugin.endOfDirectory(plugin_handle)
 
 def get_movies_basic_api(page=1, category='popular'):
     """Basic TMDB API fallback - works without enhanced clients"""
