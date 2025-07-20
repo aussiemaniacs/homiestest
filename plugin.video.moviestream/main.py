@@ -121,16 +121,19 @@ def list_movies(page=1):
     xbmcplugin.setPluginCategory(plugin_handle, 'Movies')
     xbmcplugin.setContent(plugin_handle, 'movies')
     
-    tmdb = TMDBClient()
-    movies = tmdb.get_popular_movies(page)
+    if not CLIENTS_INITIALIZED:
+        show_error_message("Client initialization failed")
+        return
+    
+    movies = tmdb_client.get_popular_movies(page)
     
     if movies:
         for movie in movies.get('results', []):
-            add_movie_item(movie)
+            add_movie_item(movie, from_tmdb=True)
         
         # Add next page if available
         if page < movies.get('total_pages', 1):
-            list_item = xbmcgui.ListItem(label='Next Page >>')
+            list_item = xbmcgui.ListItem(label='➡️ Next Page >>')
             list_item.setArt({'thumb': 'DefaultFolder.png'})
             url = get_url(action='movies', page=page + 1)
             xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
