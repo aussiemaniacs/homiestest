@@ -1185,7 +1185,13 @@ def router(paramstring):
         elif action == 'show_episodes':
             show_episodes(params.get('show_id'), params.get('season_number'))
         elif action == 'play_episode':
-            play_episode(params.get('show_id'), params.get('season_number'), params.get('episode_number'))
+            # Handle both new and legacy episode playback formats
+            if params.get('episode_data'):
+                play_episode(episode_data_str=params.get('episode_data'))
+            else:
+                play_episode(show_id=params.get('show_id'), 
+                           season_number=params.get('season_number'), 
+                           episode_number=params.get('episode_number'))
         
         # Collection actions
         elif action == 'github_collection':
