@@ -158,7 +158,7 @@ def list_tv_shows(page=1):
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
-def add_movie_item(movie):
+def add_movie_item(movie, from_tmdb=False):
     """Add a movie item to the directory"""
     title = movie.get('title', 'Unknown Title')
     year = movie.get('release_date', '')[:4] if movie.get('release_date') else ''
