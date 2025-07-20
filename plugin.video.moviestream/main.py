@@ -45,29 +45,45 @@ addon_profile = addon.getAddonInfo('profile')
 plugin_handle = int(sys.argv[1])
 base_url = sys.argv[0]
 
-# Initialize clients with error handling
+# Initialize clients with robust error handling
+cocoscrapers_client = None
+debrid_client = None
+tvshow_client = None
+watchlist_manager = None
+tmdb_client = None
+github_client = None
+video_player = None
+streaming_providers = None
+
+# Always try to initialize basic clients first
+try:
+    tmdb_client = TMDBClient()
+    github_client = GitHubClient()
+    video_player = VideoPlayer()
+    streaming_providers = StreamingProviders()
+    BASIC_CLIENTS_READY = True
+    xbmc.log("MovieStream: Basic clients initialized successfully", xbmc.LOGINFO)
+except Exception as e:
+    xbmc.log(f"MovieStream: Basic client initialization error: {str(e)}", xbmc.LOGERROR)
+    BASIC_CLIENTS_READY = False
+
+# Try to initialize enhanced clients if imports were successful
 if IMPORTS_SUCCESS:
     try:
         cocoscrapers_client = CocoScrapersClient()
         debrid_client = DebridClient()
         tvshow_client = TVShowClient()
         watchlist_manager = WatchlistManager()
-        tmdb_client = TMDBClient()
-        github_client = GitHubClient()
-        video_player = VideoPlayer()
-        streaming_providers = StreamingProviders()
         CLIENTS_INITIALIZED = True
-        xbmc.log("MovieStream: All clients initialized successfully", xbmc.LOGINFO)
+        xbmc.log("MovieStream: Enhanced clients initialized successfully", xbmc.LOGINFO)
     except Exception as e:
-        xbmc.log(f"MovieStream: Client initialization error: {str(e)}", xbmc.LOGERROR)
+        xbmc.log(f"MovieStream: Enhanced client initialization error: {str(e)}", xbmc.LOGERROR)
         CLIENTS_INITIALIZED = False
-        # Initialize basic clients only
-        tmdb_client = TMDBClient()
-        github_client = GitHubClient()
-        video_player = VideoPlayer()
-        streaming_providers = StreamingProviders()
+        # Enhanced clients failed, but basic clients should still work
+        xbmc.log("MovieStream: Running in basic mode", xbmc.LOGINFO)
 else:
     CLIENTS_INITIALIZED = False
+    xbmc.log("MovieStream: Enhanced imports failed - running in basic mode", xbmc.LOGINFO)
 
 def get_url(**kwargs):
     """Create a URL for calling the plugin"""
