@@ -997,24 +997,47 @@ def router(paramstring):
     if params:
         action = params.get('action')
         
-        if action == 'movies':
+        # Main menu actions
+        if action == 'movies_menu':
+            movies_menu()
+        elif action == 'tvshows_menu':
+            tvshows_menu()
+        elif action == 'search_menu':
+            search_menu()
+        elif action == 'my_lists_menu':
+            my_lists_menu()
+        elif action == 'tools_menu':
+            tools_menu()
+        
+        # Movie actions
+        elif action == 'movies':
             list_movies(int(params.get('page', 1)))
-        elif action == 'tvshows':
-            list_tv_shows(int(params.get('page', 1)))
+        elif action == 'play_movie':
+            play_movie(params.get('movie_data', '{}'))
         elif action == 'search_movies':
             search_movies()
+            
+        # TV Show actions
+        elif action == 'tvshows':
+            list_tv_shows(int(params.get('page', 1)))
         elif action == 'search_tv':
             search_tv_shows()
         elif action == 'show_seasons':
             show_seasons(params.get('show_id'))
         elif action == 'show_episodes':
             show_episodes(params.get('show_id'), params.get('season_number'))
-        elif action == 'play_movie':
-            play_movie(params.get('movie_data'))
         elif action == 'play_episode':
             play_episode(params.get('show_id'), params.get('season_number'), params.get('episode_number'))
+        
+        # Collection actions
         elif action == 'github_collection':
             github_collection()
+            
+        # Tool actions
+        elif action == 'test_tmdb':
+            test_tmdb()
+        elif action == 'test_github':
+            test_github()
         elif action == 'test_movie_playback':
             test_movie_playback()
         elif action == 'debug_info':
@@ -1023,28 +1046,82 @@ def router(paramstring):
             cocoscrapers_status()
         elif action == 'debrid_status':
             debrid_status()
-        elif action == 'streaming_providers':
-            streaming_providers()
-        elif action == 'subtitle_manager':
-            subtitle_manager()
-        elif action == 'tools':
-            tools()
-        elif action == 'test_tmdb':
-            test_tmdb()
-        elif action == 'test_github':
-            test_github()
         elif action == 'clear_all_cache':
             clear_all_cache()
         elif action == 'addon_info':
             addon_info()
+            
+        # Other actions
+        elif action == 'streaming_providers':
+            streaming_providers()
+        elif action == 'subtitle_manager':
+            subtitle_manager()
         elif action == 'generate_sample_db':
             generate_sample_db()
         elif action == 'settings':
             open_settings()
         else:
+            # Default to main menu
             list_categories()
     else:
+        # No parameters, show main menu
         list_categories()
+
+# Additional missing functions that need to be implemented
+def search_tv_shows():
+    """Search for TV shows"""
+    keyboard = xbmc.Keyboard('', 'Search TV Shows')
+    keyboard.doModal()
+    
+    if keyboard.isConfirmed():
+        query = keyboard.getText()
+        if query:
+            xbmcplugin.setPluginCategory(plugin_handle, f'Search: {query}')
+            xbmcplugin.setContent(plugin_handle, 'tvshows')
+            
+            if not CLIENTS_INITIALIZED:
+                show_error_message("Search unavailable - client initialization failed")
+                return
+            
+            try:
+                # Use TMDB search for TV shows
+                api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
+                url = f'https://api.themoviedb.org/3/search/tv?api_key={api_key}&query={query}'
+                
+                response = requests.get(url, timeout=10)
+                results = response.json()
+                
+                for show in results.get('results', [])[:20]:
+                    add_tv_show_item(show)
+                
+                xbmcplugin.endOfDirectory(plugin_handle)
+                
+            except Exception as e:
+                xbmc.log(f"MovieStream: TV search error: {str(e)}", xbmc.LOGERROR)
+                show_error_message('TV show search failed')
+
+def tvshows_menu():
+    """TV shows submenu"""
+    xbmcplugin.setPluginCategory(plugin_handle, '📺 TV Shows')
+    xbmcplugin.setContent(plugin_handle, 'tvshows')
+    
+    menu_items = [
+        ('Popular TV Shows', 'tvshows', 'popular'),
+        ('Top Rated TV Shows', 'top_rated_tvshows', ''),
+        ('Airing Today', 'airing_today_tvshows', ''),
+        ('Search TV Shows', 'search_tv', '')
+    ]
+    
+    for name, action, param in menu_items:
+        list_item = xbmcgui.ListItem(label=name)
+        list_item.setArt({'thumb': 'DefaultTVShows.png'})
+        list_item.setInfo('video', {'title': name, 'genre': 'Directory'})
+        
+        url = get_url(action=action, param=param)
+        is_folder = action != 'search_tv'
+        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, is_folder)
+    
+    xbmcplugin.endOfDirectory(plugin_handle)
 
 if __name__ == '__main__':
     router(sys.argv[2][1:] if len(sys.argv) > 2 else '')
