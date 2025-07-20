@@ -398,7 +398,7 @@ def add_tv_show_item(show):
     xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
 
 def search_movies():
-    """Search for movies"""
+    """Search for movies - Works with basic or enhanced clients"""
     keyboard = xbmc.Keyboard('', 'Search Movies')
     keyboard.doModal()
     
@@ -408,14 +408,47 @@ def search_movies():
             xbmcplugin.setPluginCategory(plugin_handle, f'Search: {query}')
             xbmcplugin.setContent(plugin_handle, 'movies')
             
-            tmdb = TMDBClient()
-            results = tmdb.search_movies(query)
+            try:
+                # Try enhanced client first, fallback to basic API
+                if CLIENTS_INITIALIZED and tmdb_client and hasattr(tmdb_client, 'search_movies'):
+                    results = tmdb_client.search_movies(query)
+                else:
+                    # Use basic TMDB search API
+                    results = search_movies_basic_api(query)
+                
+                if results and results.get('results'):
+                    for movie in results.get('results', [])[:20]:  # Limit to 20 results
+                        add_movie_item(movie, from_tmdb=True)
+                else:
+                    # Show no results message
+                    list_item = xbmcgui.ListItem(label=f'No results found for "{query}"')
+                    list_item.setInfo('video', {'title': 'No Results', 'plot': f'No movies found matching "{query}"'})
+                    xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
+                
+                xbmcplugin.endOfDirectory(plugin_handle)
+                
+            except Exception as e:
+                xbmc.log(f"MovieStream: Movie search error: {str(e)}", xbmc.LOGERROR)
+                show_error_message(f"Search failed: {str(e)}")
+
+def search_movies_basic_api(query):
+    """Basic movie search using TMDB API"""
+    try:
+        api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
+        url = f'https://api.themoviedb.org/3/search/movie?api_key={api_key}&query={query}'
+        
+        xbmc.log(f"MovieStream: Searching movies with basic API: {query}", xbmc.LOGINFO)
+        response = requests.get(url, timeout=10)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            xbmc.log(f"MovieStream: Search API error {response.status_code}", xbmc.LOGERROR)
+            return {}
             
-            if results:
-                for movie in results.get('results', []):
-                    add_movie_item(movie)
-            
-            xbmcplugin.endOfDirectory(plugin_handle)
+    except Exception as e:
+        xbmc.log(f"MovieStream: Basic search error: {str(e)}", xbmc.LOGERROR)
+        return {}
 
 def search_tv_shows():
     """Search for TV shows"""
