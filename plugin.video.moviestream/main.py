@@ -752,20 +752,93 @@ def play_sample_video():
     xbmcplugin.setResolvedURL(plugin_handle, True, list_item)
     xbmc.log("MovieStream: Playing sample video", xbmc.LOGINFO)
 
-def play_episode(show_id, season_number, episode_number):
-    """Play a TV episode"""
-    # Get episode details from TMDB
-    tmdb = TMDBClient()
-    episode_details = tmdb.get_episode_details(show_id, season_number, episode_number)
+def play_episode(episode_data_str=None, show_id=None, season_number=None, episode_number=None):
+    """Play a TV episode with Cocoscrapers support"""
+    xbmc.log("MovieStream: PLAY_EPISODE CALLED", xbmc.LOGINFO)
     
-    if episode_details:
-        video_url = get_video_url_for_episode(episode_details, show_id, season_number, episode_number)
-        
-        if video_url:
-            player = VideoPlayer()
-            player.play_video(video_url, episode_details)
+    try:
+        # Handle both old and new parameter formats
+        if episode_data_str:
+            episode_data = json.loads(episode_data_str)
         else:
-            xbmcgui.Dialog().notification('MovieStream', 'No video source found', xbmcgui.NOTIFICATION_WARNING)
+            # Legacy format - create episode data from individual parameters
+            episode_data = {
+                'show_title': f'Show {show_id}',
+                'season': int(season_number) if season_number else 1,
+                'episode': int(episode_number) if episode_number else 1,
+                'show_tmdb_id': show_id,
+                'type': 'episode',
+                'title': f'Episode {episode_number}',
+                'year': '',
+                'plot': ''
+            }
+        
+        xbmc.log(f"MovieStream: Episode data: {episode_data.get('show_title', 'Unknown')} S{episode_data.get('season', 1)}E{episode_data.get('episode', 1)}", xbmc.LOGINFO)
+        
+        # Show immediate feedback
+        show_title = f"{episode_data.get('show_title', 'Unknown Show')} S{episode_data.get('season', 1)}E{episode_data.get('episode', 1)}"
+        xbmcgui.Dialog().notification('MovieStream', f'Loading {show_title}...', xbmcgui.NOTIFICATION_INFO, 2000)
+        
+        # PRIORITY 1: Try Cocoscrapers (if enabled and available)
+        if (CLIENTS_INITIALIZED and 
+            addon.getSettingBool('enable_cocoscrapers') and 
+            cocoscrapers_client.is_available()):
+            
+            xbmc.log("MovieStream: Using Cocoscrapers for episode (PRIORITY 1)", xbmc.LOGINFO)
+            
+            try:
+                # Scrape episode sources with Cocoscrapers
+                sources = cocoscrapers_client.scrape_episode_sources(
+                    show_title=episode_data['show_title'],
+                    year=episode_data.get('year', ''),
+                    season=episode_data['season'],
+                    episode=episode_data['episode'],
+                    show_id=episode_data.get('show_tmdb_id')
+                )
+                
+                if sources:
+                    xbmc.log(f"MovieStream: Found {len(sources)} episode sources via Cocoscrapers", xbmc.LOGINFO)
+                    
+                    # Filter with debrid services if available
+                    if CLIENTS_INITIALIZED and debrid_client.is_available():
+                        sources = debrid_client.filter_debrid_sources(sources)
+                        xbmc.log(f"MovieStream: After debrid filtering: {len(sources)} sources", xbmc.LOGINFO)
+                    
+                    if sources:
+                        # Auto-play best source or show selection
+                        if addon.getSettingBool('auto_play_best_source') and sources:
+                            selected_source = sources[0]  # Best source is first
+                            xbmc.log("MovieStream: Auto-playing best episode source", xbmc.LOGINFO)
+                        else:
+                            selected_source = cocoscrapers_client.show_source_selection(sources, show_title)
+                        
+                        if selected_source:
+                            # Resolve source
+                            resolved_url = cocoscrapers_client.resolve_source(selected_source)
+                            
+                            if resolved_url:
+                                xbmc.log(f"MovieStream: Successfully resolved episode URL via Cocoscrapers", xbmc.LOGINFO)
+                                play_resolved_url(resolved_url, episode_data)
+                                return
+                            else:
+                                xbmc.log("MovieStream: Failed to resolve Cocoscrapers episode source", xbmc.LOGWARNING)
+                        else:
+                            xbmc.log("MovieStream: No episode source selected by user", xbmc.LOGINFO)
+                else:
+                    xbmc.log("MovieStream: No episode sources found via Cocoscrapers", xbmc.LOGWARNING)
+                    
+            except Exception as e:
+                xbmc.log(f"MovieStream: Cocoscrapers episode error: {str(e)}", xbmc.LOGERROR)
+        
+        # FALLBACK: Use sample video
+        xbmc.log("MovieStream: All episode methods failed, using sample video", xbmc.LOGWARNING)
+        xbmcgui.Dialog().notification('MovieStream', 'No episode sources found - playing sample', xbmcgui.NOTIFICATION_WARNING)
+        play_sample_video()
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Critical error in play_episode: {str(e)}", xbmc.LOGERROR)
+        xbmcgui.Dialog().notification('MovieStream', 'Episode playback failed', xbmcgui.NOTIFICATION_ERROR)
+        play_sample_video()
 
 def test_movie_playback():
     """Test movie playback with sample movie"""
