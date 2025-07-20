@@ -75,29 +75,40 @@ def get_url(**kwargs):
 
 def list_categories():
     """Display main categories"""
-    xbmcplugin.setPluginCategory(plugin_handle, 'MovieStream')
+    xbmcplugin.setPluginCategory(plugin_handle, 'MovieStream Pro')
     xbmcplugin.setContent(plugin_handle, 'videos')
     
+    # Check Cocoscrapers status for display
+    cocoscrapers_status = "✅" if CLIENTS_INITIALIZED and cocoscrapers_client.is_available() else "❌"
+    
     categories = [
-        ('Movies', 'movies', 'DefaultMovies.png'),
-        ('TV Shows', 'tvshows', 'DefaultTVShows.png'),
-        ('Search Movies', 'search_movies', 'DefaultSearch.png'),
-        ('Search TV Shows', 'search_tv', 'DefaultSearch.png'),
-        ('GitHub Collection', 'github_collection', 'DefaultFolder.png'),
-        ('Streaming Providers', 'streaming_providers', 'DefaultNetwork.png'),
-        ('Subtitle Manager', 'subtitle_manager', 'DefaultSubtitles.png'),
-        ('Tools', 'tools', 'DefaultAddonProgram.png'),
-        ('Settings', 'settings', 'DefaultAddonProgram.png')
+        (f'🎬 Movies', 'movies_menu', 'DefaultMovies.png'),
+        (f'📺 TV Shows', 'tvshows_menu', 'DefaultTVShows.png'),
+        (f'🔍 Search', 'search_menu', 'DefaultSearch.png'),
+        (f'📁 GitHub Collection', 'github_collection', 'DefaultFolder.png'),
+        (f'⭐ My Lists', 'my_lists_menu', 'DefaultPlaylist.png'),
+        (f'🎭 Streaming Providers', 'streaming_providers', 'DefaultNetwork.png'),
+        (f'🎞️ Subtitle Manager', 'subtitle_manager', 'DefaultSubtitles.png'),
+        (f'⚙️ Tools', 'tools_menu', 'DefaultAddonProgram.png'),
+        (f'🔧 Settings', 'settings', 'DefaultAddonProgram.png')
     ]
     
     for name, action, icon in categories:
         list_item = xbmcgui.ListItem(label=name)
         list_item.setArt({'thumb': icon, 'icon': icon})
-        list_item.setInfo('video', {'title': name, 'genre': 'Directory'})
+        list_item.setInfo('video', {'title': name, 'genre': 'Directory', 'mediatype': 'video'})
         
         url = get_url(action=action)
         is_folder = action != 'settings'
         xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, is_folder)
+    
+    # Add status info at the bottom
+    status_info = f"Cocoscrapers: {cocoscrapers_status} | Status: {'Ready' if CLIENTS_INITIALIZED else 'Limited Mode'}"
+    list_item = xbmcgui.ListItem(label=f"ℹ️ {status_info}")
+    list_item.setArt({'thumb': 'DefaultAddonProgram.png'})
+    list_item.setInfo('video', {'title': status_info, 'plot': 'Addon status information'})
+    url = get_url(action='debug_info')
+    xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
     
     xbmcplugin.endOfDirectory(plugin_handle)
 
