@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
+MovieStream Pro - Complete Kodi Addon with Cocoscrapers Integration
+Features: TMDB, GitHub, Cocoscrapers, Debrid Services, TV Shows, Watchlist, Favorites
+Version: 2.0.0
+"""
+
 import sys
 import urllib.parse as urlparse
 import xbmc
@@ -8,14 +14,25 @@ import xbmcgui
 import xbmcplugin
 import xbmcaddon
 import xbmcvfs
-import os
+import requests
 import json
-from resources.lib.tmdb_client import TMDBClient
-from resources.lib.github_client import GitHubClient
-from resources.lib.video_player import VideoPlayer
-from resources.lib.torrent_client import TorrentClient
-from resources.lib.subtitle_client import SubtitleClient
-from resources.lib.streaming_providers import StreamingProviders
+
+# Import our enhanced modules
+try:
+    from resources.lib.cocoscrapers_client import CocoScrapersClient
+    from resources.lib.debrid_client import DebridClient
+    from resources.lib.tvshow_client import TVShowClient
+    from resources.lib.watchlist_manager import WatchlistManager
+    from resources.lib.tmdb_client import TMDBClient
+    from resources.lib.github_client import GitHubClient
+    from resources.lib.video_player import VideoPlayer
+    from resources.lib.torrent_client import TorrentClient
+    from resources.lib.subtitle_client import SubtitleClient
+    from resources.lib.streaming_providers import StreamingProviders
+    IMPORTS_SUCCESS = True
+except Exception as e:
+    xbmc.log(f"MovieStream: Import error: {str(e)}", xbmc.LOGERROR)
+    IMPORTS_SUCCESS = False
 
 # Get addon info
 addon = xbmcaddon.Addon()
