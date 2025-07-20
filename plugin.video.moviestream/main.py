@@ -749,7 +749,7 @@ def play_sample_video():
     sample_url = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
     list_item = xbmcgui.ListItem(label="Sample Video", path=sample_url)
     list_item.setInfo('video', {'title': 'Sample Video', 'plot': 'Sample video for testing'})
-    xbmcplugin.setResolvedURL(plugin_handle, True, list_item)
+    xbmcplugin.setResolvedUrl(plugin_handle, True, list_item)
     xbmc.log("MovieStream: Playing sample video", xbmc.LOGINFO)
 
 def play_episode(episode_data_str=None, show_id=None, season_number=None, episode_number=None):
