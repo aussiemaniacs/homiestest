@@ -1,0 +1,38 @@
+[
+  {
+    "title": "Big Buck Bunny",
+    "year": 2008,
+    "plot": "A large and lovable rabbit deals with three tiny bullies, led by a flying squirrel, who are determined to squelch his happiness.",
+    "genre": "Animation, Comedy, Family",
+    "rating": 6.2,
+    "poster_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/250px-Big_buck_bunny_poster_big.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+  },
+  {
+    "title": "Sintel",
+    "year": 2010,
+    "plot": "A lonely young woman, Sintel, helps and befriends a dragon, whom she calls Scales. But when he is kidnapped by an adult dragon, Sintel decides to embark on a dangerous quest to find her lost friend Scales.",
+    "genre": "Animation, Adventure, Drama",
+    "rating": 7.1,
+    "poster_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Sintel_poster.jpg/220px-Sintel_poster.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+  },
+  {
+    "title": "Elephant's Dream",
+    "year": 2006,
+    "plot": "Two strange characters wander through a broken and strangely surreal landscape.",
+    "genre": "Animation, Fantasy",
+    "rating": 6.5,
+    "poster_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Elephants_Dream_s5_proog.jpg/250px-Elephants_Dream_s5_proog.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+  },
+  {
+    "title": "Tears of Steel",
+    "year": 2012,
+    "plot": "In an apocalyptic future, a group of soldiers and scientists takes refuge in Amsterdam to try to stop an army of robots that threatens humanity.",
+    "genre": "Science Fiction, Action",
+    "rating": 5.8,
+    "poster_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Tears_of_Steel_poster.jpg/220px-Tears_of_Steel_poster.jpg",
+    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+  }
+]
