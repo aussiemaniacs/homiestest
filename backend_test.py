@@ -30,6 +30,56 @@ class MockXBMC:
     def sleep(ms):
         import time
         time.sleep(ms / 1000.0)
+    
+    @staticmethod
+    def executebuiltin(command):
+        print(f"[KODI BUILTIN] {command}")
+    
+    class Player:
+        def __init__(self):
+            self.playing = False
+            self.time = 0
+            self.total_time = 100
+            self.file = ""
+        
+        def isPlaying(self):
+            return self.playing
+        
+        def getTime(self):
+            return self.time
+        
+        def getTotalTime(self):
+            return self.total_time
+        
+        def getPlayingFile(self):
+            return self.file
+        
+        def seekTime(self, position):
+            self.time = position
+        
+        def play(self, url, listitem=None):
+            self.playing = True
+            self.file = url
+            print(f"[PLAYER] Playing: {url}")
+        
+        def setSubtitles(self, subtitle_url):
+            print(f"[PLAYER] Subtitles: {subtitle_url}")
+    
+    class Keyboard:
+        def __init__(self, default='', heading=''):
+            self.default = default
+            self.heading = heading
+            self.confirmed = True
+            self.text = "test query"
+        
+        def doModal(self):
+            pass
+        
+        def isConfirmed(self):
+            return self.confirmed
+        
+        def getText(self):
+            return self.text
 
 class MockXBMCGUI:
     NOTIFICATION_INFO = 'info'
