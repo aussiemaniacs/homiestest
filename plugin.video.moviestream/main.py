@@ -145,21 +145,79 @@ def list_tv_shows(page=1):
     xbmcplugin.setPluginCategory(plugin_handle, 'TV Shows')
     xbmcplugin.setContent(plugin_handle, 'tvshows')
     
-    tmdb = TMDBClient()
-    shows = tmdb.get_popular_tv_shows(page)
+    if not CLIENTS_INITIALIZED:
+        show_error_message("Client initialization failed")
+        return
     
-    if shows:
-        for show in shows.get('results', []):
-            add_tv_show_item(show)
+    try:
+        # Get popular TV shows from TMDB
+        api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
+        url = f'https://api.themoviedb.org/3/tv/popular?api_key={api_key}&page={page}'
         
-        # Add next page if available
-        if page < shows.get('total_pages', 1):
-            list_item = xbmcgui.ListItem(label='Next Page >>')
-            list_item.setArt({'thumb': 'DefaultFolder.png'})
-            url = get_url(action='tvshows', page=page + 1)
-            xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
+        response = requests.get(url, timeout=10)
+        shows = response.json()
+        
+        if shows:
+            for show in shows.get('results', []):
+                add_tv_show_item(show)
+            
+            # Add next page if available
+            if page < shows.get('total_pages', 1):
+                list_item = xbmcgui.ListItem(label='➡️ Next Page >>')
+                list_item.setArt({'thumb': 'DefaultFolder.png'})
+                url = get_url(action='tvshows', page=page + 1)
+                xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
+        
+        xbmcplugin.endOfDirectory(plugin_handle)
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error loading TV shows: {str(e)}", xbmc.LOGERROR)
+        show_error_message("Failed to load TV shows")
+
+def show_seasons(show_id):
+    """Show seasons for a TV show"""
+    if not CLIENTS_INITIALIZED:
+        show_error_message("Client initialization failed")
+        return
     
-    xbmcplugin.endOfDirectory(plugin_handle)
+    try:
+        # Get show details from TMDB
+        api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
+        url = f'https://api.themoviedb.org/3/tv/{show_id}?api_key={api_key}'
+        
+        response = requests.get(url, timeout=10)
+        show_details = response.json()
+        
+        if show_details:
+            xbmcplugin.setPluginCategory(plugin_handle, show_details.get('name', 'TV Show'))
+            xbmcplugin.setContent(plugin_handle, 'seasons')
+            
+            for season in show_details.get('seasons', []):
+                season_number = season.get('season_number')
+                season_name = season.get('name', f'Season {season_number}')
+                
+                list_item = xbmcgui.ListItem(label=season_name)
+                
+                poster_path = season.get('poster_path')
+                if poster_path:
+                    poster_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
+                    list_item.setArt({'thumb': poster_url, 'poster': poster_url})
+                
+                list_item.setInfo('video', {
+                    'title': season_name,
+                    'plot': season.get('overview', ''),
+                    'season': season_number,
+                    'mediatype': 'season'
+                })
+                
+                url = get_url(action='show_episodes', show_id=show_id, season_number=season_number)
+                xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
+            
+            xbmcplugin.endOfDirectory(plugin_handle)
+    
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error loading seasons: {str(e)}", xbmc.LOGERROR)
+        show_error_message("Failed to load seasons")
 
 def add_movie_item(movie, from_tmdb=False):
     """Add a movie item to the directory with Cocoscrapers support"""
