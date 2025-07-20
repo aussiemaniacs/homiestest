@@ -382,6 +382,117 @@ def show_episodes(show_id, season_number):
         
         xbmcplugin.endOfDirectory(plugin_handle)
 
+def movies_menu():
+    """Movies submenu"""
+    xbmcplugin.setPluginCategory(plugin_handle, '🎬 Movies')
+    xbmcplugin.setContent(plugin_handle, 'movies')
+    
+    menu_items = [
+        ('Popular Movies', 'movies', 'popular'),
+        ('Top Rated Movies', 'top_rated_movies', ''),
+        ('Now Playing', 'now_playing_movies', ''),
+        ('Upcoming Movies', 'upcoming_movies', ''),
+        ('Search Movies', 'search_movies', '')
+    ]
+    
+    for name, action, param in menu_items:
+        list_item = xbmcgui.ListItem(label=name)
+        list_item.setArt({'thumb': 'DefaultMovies.png'})
+        list_item.setInfo('video', {'title': name, 'genre': 'Directory'})
+        
+        url = get_url(action=action, param=param)
+        is_folder = action != 'search_movies'
+        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, is_folder)
+    
+    xbmcplugin.endOfDirectory(plugin_handle)
+
+def search_menu():
+    """Search submenu"""
+    xbmcplugin.setPluginCategory(plugin_handle, '🔍 Search')
+    xbmcplugin.setContent(plugin_handle, 'videos')
+    
+    menu_items = [
+        ('Search Movies', 'search_movies', ''),
+        ('Search TV Shows', 'search_tv_shows', '')
+    ]
+    
+    for name, action, param in menu_items:
+        list_item = xbmcgui.ListItem(label=name)
+        list_item.setArt({'thumb': 'DefaultSearch.png'})
+        list_item.setInfo('video', {'title': name, 'genre': 'Directory'})
+        
+        url = get_url(action=action)
+        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
+    
+    xbmcplugin.endOfDirectory(plugin_handle)
+
+def my_lists_menu():
+    """My Lists submenu"""
+    xbmcplugin.setPluginCategory(plugin_handle, '⭐ My Lists')
+    xbmcplugin.setContent(plugin_handle, 'videos')
+    
+    if not CLIENTS_INITIALIZED:
+        list_item = xbmcgui.ListItem(label='Feature not available')
+        list_item.setInfo('video', {'title': 'Error', 'plot': 'Enhanced features require proper initialization'})
+        xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
+        xbmcplugin.endOfDirectory(plugin_handle)
+        return
+    
+    try:
+        stats = watchlist_manager.get_stats() if hasattr(watchlist_manager, 'get_stats') else {'watchlist_count': 0, 'favorites_count': 0, 'history_count': 0}
+    except:
+        stats = {'watchlist_count': 0, 'favorites_count': 0, 'history_count': 0}
+    
+    menu_items = [
+        (f"📋 Watchlist ({stats.get('watchlist_count', 0)})", 'list_watchlist', ''),
+        (f"❤️ Favorites ({stats.get('favorites_count', 0)})", 'list_favorites', ''),
+        (f"📖 Watch History ({stats.get('history_count', 0)})", 'list_history', '')
+    ]
+    
+    for name, action, param in menu_items:
+        list_item = xbmcgui.ListItem(label=name)
+        list_item.setArt({'thumb': 'DefaultPlaylist.png'})
+        list_item.setInfo('video', {'title': name, 'genre': 'Directory'})
+        
+        url = get_url(action=action)
+        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, True)
+    
+    xbmcplugin.endOfDirectory(plugin_handle)
+
+def tools_menu():
+    """Enhanced Tools submenu"""
+    xbmcplugin.setPluginCategory(plugin_handle, '⚙️ Tools')
+    xbmcplugin.setContent(plugin_handle, 'files')
+    
+    # Check addon status
+    cocoscrapers_status = "✅ Available" if CLIENTS_INITIALIZED and cocoscrapers_client.is_available() else "❌ Not Available"
+    debrid_status = "✅ Available" if CLIENTS_INITIALIZED and debrid_client.is_available() else "❌ Not Available"
+    
+    menu_items = [
+        ('🔍 Test TMDB Connection', 'test_tmdb', 'Test connection to TMDB API'),
+        ('📁 Test GitHub Connection', 'test_github', 'Test connection to GitHub repository'),
+        (f'🎬 Cocoscrapers Status', 'cocoscrapers_status', f'Status: {cocoscrapers_status}'),
+        (f'💎 Debrid Account Status', 'debrid_status', f'Status: {debrid_status}'),
+        ('🎮 Test Movie Playback', 'test_movie_playback', 'Test sample movie playback'),
+        ('ℹ️ Debug Information', 'debug_info', 'Show addon debug information'),
+        ('🗑️ Clear All Cache', 'clear_all_cache', 'Clear all cached data'),
+        ('📊 Addon Information', 'addon_info', 'Show addon version and info')
+    ]
+    
+    for name, action, description in menu_items:
+        list_item = xbmcgui.ListItem(label=name)
+        list_item.setArt({'thumb': 'DefaultAddonProgram.png'})
+        list_item.setInfo('video', {
+            'title': name,
+            'plot': description,
+            'genre': 'Tool'
+        })
+        
+        url = get_url(action=action)
+        xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
+    
+    xbmcplugin.endOfDirectory(plugin_handle)
+
 def github_collection():
     """Show GitHub collection with enhanced functionality"""
     xbmcplugin.setPluginCategory(plugin_handle, '📁 GitHub Collection')
