@@ -406,39 +406,66 @@ def show_seasons(show_id):
 
 def show_episodes(show_id, season_number):
     """Show episodes for a season"""
-    tmdb = TMDBClient()
-    season_details = tmdb.get_season_details(show_id, season_number)
+    if not CLIENTS_INITIALIZED:
+        show_error_message("Client initialization failed")
+        return
     
-    if season_details:
-        xbmcplugin.setPluginCategory(plugin_handle, f"Season {season_number}")
-        xbmcplugin.setContent(plugin_handle, 'episodes')
+    try:
+        # Get season details from TMDB
+        api_key = addon.getSetting('tmdb_api_key') or 'd0f489a129429db6f2dd4751e5dbeb82'
+        url = f'https://api.themoviedb.org/3/tv/{show_id}/season/{season_number}?api_key={api_key}'
         
-        for episode in season_details.get('episodes', []):
-            episode_number = episode.get('episode_number')
-            episode_name = episode.get('name', f'Episode {episode_number}')
-            
-            list_item = xbmcgui.ListItem(label=f"{episode_number}. {episode_name}")
-            
-            still_path = episode.get('still_path')
-            if still_path:
-                thumb_url = f"https://image.tmdb.org/t/p/w500{still_path}"
-                list_item.setArt({'thumb': thumb_url})
-            
-            list_item.setInfo('video', {
-                'title': episode_name,
-                'episode': episode_number,
-                'season': season_number,
-                'plot': episode.get('overview', ''),
-                'rating': episode.get('vote_average', 0),
-                'mediatype': 'episode'
-            })
-            
-            list_item.setProperty('IsPlayable', 'true')
-            
-            url = get_url(action='play_episode', show_id=show_id, season_number=season_number, episode_number=episode_number)
-            xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
+        response = requests.get(url, timeout=10)
+        season_details = response.json()
         
-        xbmcplugin.endOfDirectory(plugin_handle)
+        if season_details:
+            xbmcplugin.setPluginCategory(plugin_handle, f"Season {season_number}")
+            xbmcplugin.setContent(plugin_handle, 'episodes')
+            
+            show_name = season_details.get('name', 'Unknown Show')
+            
+            for episode in season_details.get('episodes', []):
+                episode_number = episode.get('episode_number')
+                episode_name = episode.get('name', f'Episode {episode_number}')
+                
+                list_item = xbmcgui.ListItem(label=f"{episode_number}. {episode_name}")
+                
+                still_path = episode.get('still_path')
+                if still_path:
+                    thumb_url = f"https://image.tmdb.org/t/p/w500{still_path}"
+                    list_item.setArt({'thumb': thumb_url})
+                
+                list_item.setInfo('video', {
+                    'title': episode_name,
+                    'plot': episode.get('overview', ''),
+                    'episode': episode_number,
+                    'season': int(season_number),
+                    'rating': float(episode.get('vote_average', 0)),
+                    'mediatype': 'episode'
+                })
+                
+                list_item.setProperty('IsPlayable', 'true')
+                
+                # Create episode data for playback
+                episode_data = {
+                    'title': episode_name,
+                    'show_title': show_name,
+                    'year': episode.get('air_date', '')[:4] if episode.get('air_date') else '',
+                    'season': int(season_number),
+                    'episode': episode_number,
+                    'show_tmdb_id': show_id,
+                    'type': 'episode',
+                    'plot': episode.get('overview', '')
+                }
+                
+                url = get_url(action='play_episode', episode_data=json.dumps(episode_data))
+                xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, False)
+            
+            xbmcplugin.endOfDirectory(plugin_handle)
+    
+    except Exception as e:
+        xbmc.log(f"MovieStream: Error loading episodes: {str(e)}", xbmc.LOGERROR)
+        show_error_message("Failed to load episodes")
 
 def movies_menu():
     """Movies submenu"""
