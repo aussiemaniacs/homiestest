@@ -648,30 +648,67 @@ def github_collection():
     xbmcplugin.setContent(plugin_handle, 'movies')
     
     try:
-        if not CLIENTS_INITIALIZED:
-            show_error_message("Client initialization failed")
+        # Check if GitHub client is available
+        if not github_client:
+            show_error_message("GitHub client not available")
             return
         
-        collection = github_client.get_movie_collection()
+        # Try to get collection - works with both basic and enhanced clients
+        if hasattr(github_client, 'get_movie_collection'):
+            collection = github_client.get_movie_collection()
+        else:
+            # Fallback to basic GitHub API
+            collection = get_github_collection_basic()
         
         if collection:
             for movie in collection:
                 add_movie_item(movie, from_tmdb=False)
         else:
             # Show no content message
-            list_item = xbmcgui.ListItem(label='No movies found')
-            list_item.setInfo('video', {'title': 'No Content', 'plot': 'Check your GitHub repository URL in settings'})
+            list_item = xbmcgui.ListItem(label='📭 No movies found in collection')
+            list_item.setInfo('video', {
+                'title': 'Empty Collection', 
+                'plot': 'No movies found.\n\nPossible causes:\n• GitHub repository URL not set\n• movies.json file missing\n• Network connection issue\n\nCheck Settings > GitHub Repository URL'
+            })
             xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
     
     except Exception as e:
         xbmc.log(f"MovieStream: Error loading GitHub collection: {str(e)}", xbmc.LOGERROR)
         
-        # Show error message
+        # Show error message with troubleshooting info
         list_item = xbmcgui.ListItem(label='❌ Error loading GitHub collection')
-        list_item.setInfo('video', {'title': 'Error', 'plot': f'Error: {str(e)}\nCheck GitHub repository URL in settings'})
+        list_item.setInfo('video', {
+            'title': 'GitHub Collection Error', 
+            'plot': f'Error: {str(e)}\n\nTroubleshooting:\n• Check GitHub repository URL in Settings\n• Verify movies.json file exists\n• Test connection: Tools > Test GitHub Connection\n• Check Kodi log for details'
+        })
         xbmcplugin.addDirectoryItem(plugin_handle, '', list_item, False)
     
     xbmcplugin.endOfDirectory(plugin_handle)
+
+def get_github_collection_basic():
+    """Basic GitHub collection loading without enhanced client"""
+    try:
+        github_url = addon.getSetting('github_repo_url')
+        if not github_url:
+            github_url = 'https://raw.githubusercontent.com/aussiemaniacs/homiestest/main/'
+        
+        if not github_url.endswith('/'):
+            github_url += '/'
+        
+        movies_url = github_url + 'movies.json'
+        xbmc.log(f"MovieStream: Loading GitHub collection from: {movies_url}", xbmc.LOGINFO)
+        
+        response = requests.get(movies_url, timeout=15)
+        
+        if response.status_code == 200:
+            return response.json()
+        else:
+            xbmc.log(f"MovieStream: GitHub API error {response.status_code}", xbmc.LOGERROR)
+            return []
+            
+    except Exception as e:
+        xbmc.log(f"MovieStream: Basic GitHub collection error: {str(e)}", xbmc.LOGERROR)
+        return []
 
 def play_movie(movie_data_str):
     """Play a movie with Cocoscrapers integration - PRIORITY 1"""
