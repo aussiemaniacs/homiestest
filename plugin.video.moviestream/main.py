@@ -1369,7 +1369,14 @@ def router(paramstring):
         
         # Movie actions
         elif action == 'movies':
-            list_movies(int(params.get('page', 1)))
+            category = params.get('category', 'popular')
+            list_movies(int(params.get('page', 1)), category)
+        elif action == 'top_rated_movies':
+            list_movies(int(params.get('page', 1)), 'top_rated')
+        elif action == 'now_playing_movies':
+            list_movies(int(params.get('page', 1)), 'now_playing')
+        elif action == 'upcoming_movies':
+            list_movies(int(params.get('page', 1)), 'upcoming')
         elif action == 'play_movie':
             play_movie(params.get('movie_data', '{}'))
         elif action == 'search_movies':
