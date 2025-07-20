@@ -1124,4 +1124,15 @@ def tvshows_menu():
     xbmcplugin.endOfDirectory(plugin_handle)
 
 if __name__ == '__main__':
-    router(sys.argv[2][1:] if len(sys.argv) > 2 else '')
+    try:
+        # Log startup
+        xbmc.log("MovieStream: Starting addon", xbmc.LOGINFO)
+        xbmc.log(f"MovieStream: Imports successful: {IMPORTS_SUCCESS}", xbmc.LOGINFO)
+        xbmc.log(f"MovieStream: Clients initialized: {CLIENTS_INITIALIZED}", xbmc.LOGINFO)
+        
+        # Route to appropriate function
+        router(sys.argv[2][1:] if len(sys.argv) > 2 else '')
+        
+    except Exception as e:
+        xbmc.log(f"MovieStream: Critical startup error: {str(e)}", xbmc.LOGERROR)
+        xbmcgui.Dialog().notification('MovieStream', 'Critical error - check log', xbmcgui.NOTIFICATION_ERROR)
