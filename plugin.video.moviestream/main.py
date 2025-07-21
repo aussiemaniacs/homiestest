@@ -951,6 +951,89 @@ def debug_info():
         xbmc.log(f"MovieStream: Debug info error: {str(e)}", xbmc.LOGERROR)
         xbmcgui.Dialog().ok('Debug Error', f'Error collecting debug info: {str(e)}')
 
+def test_cocoscrapers():
+    """Test Cocoscrapers functionality with a sample movie"""
+    try:
+        if not CLIENTS_INITIALIZED or not cocoscrapers_client:
+            xbmcgui.Dialog().ok('Test Error', 'Cocoscrapers client not available')
+            return
+        
+        # Create progress dialog
+        progress = xbmcgui.DialogProgress()
+        progress.create('Testing Cocoscrapers', 'Initializing test...')
+        
+        # Test movie data
+        test_movie = {
+            'title': 'The Avengers',
+            'year': '2012',
+            'tmdb_id': '24428',
+            'imdb_id': 'tt0848228'
+        }
+        
+        progress.update(25, f"Testing with: {test_movie['title']} ({test_movie['year']})")
+        xbmc.log(f"MovieStream: Testing Cocoscrapers with {test_movie['title']}", xbmc.LOGINFO)
+        
+        # Test scraping
+        sources = []
+        
+        try:
+            progress.update(50, 'Testing scrape_movie_sources...')
+            
+            if hasattr(cocoscrapers_client, 'scrape_movie_sources'):
+                sources = cocoscrapers_client.scrape_movie_sources(
+                    title=test_movie['title'],
+                    year=test_movie['year'],
+                    tmdb_id=test_movie['tmdb_id'],
+                    imdb_id=test_movie['imdb_id']
+                )
+            elif hasattr(cocoscrapers_client, 'scrape_sources'):
+                sources = cocoscrapers_client.scrape_sources(test_movie, 'movie')
+            elif hasattr(cocoscrapers_client, 'get_sources'):
+                sources = cocoscrapers_client.get_sources(test_movie)
+            
+            progress.update(75, f'Found {len(sources) if sources else 0} sources')
+            
+        except Exception as e:
+            progress.close()
+            xbmc.log(f"MovieStream: Cocoscrapers test error: {str(e)}", xbmc.LOGERROR)
+            xbmcgui.Dialog().ok('Test Failed', f'Scraping failed:\n{str(e)}')
+            return
+        
+        progress.update(100, 'Test complete')
+        progress.close()
+        
+        # Show results
+        if sources and len(sources) > 0:
+            message = f"✅ Cocoscrapers Test Successful!\n\n"
+            message += f"Movie: {test_movie['title']} ({test_movie['year']})\n"
+            message += f"Sources found: {len(sources)}\n\n"
+            
+            # Show first few sources
+            message += "Sample sources:\n"
+            for i, source in enumerate(sources[:3]):
+                if isinstance(source, dict):
+                    quality = source.get('quality', 'Unknown')
+                    provider = source.get('provider', source.get('source', 'Unknown'))
+                    message += f"{i+1}. {provider} ({quality})\n"
+                else:
+                    message += f"{i+1}. {str(source)[:30]}...\n"
+            
+            if len(sources) > 3:
+                message += f"... and {len(sources) - 3} more"
+            
+            xbmcgui.Dialog().ok('Test Results', message)
+        else:
+            message = "⚠️ Cocoscrapers Test Completed\n\n"
+            message += f"Movie: {test_movie['title']} ({test_movie['year']})\n"
+            message += "No sources found\n\n"
+            message += "This could be normal - try a different movie or check scrapers."
+            
+            xbmcgui.Dialog().ok('Test Results', message)
+            
+    except Exception as e:
+        xbmc.log(f"MovieStream: Cocoscrapers test error: {str(e)}", xbmc.LOGERROR)
+        xbmcgui.Dialog().ok('Test Error', f'Test failed: {str(e)}')
+
 def test_movie_playback():
     """Test movie playback with sample movie"""
     try:
