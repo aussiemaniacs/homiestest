@@ -1,18 +1,18 @@
 [
   {
     "id": "movie_001",
-    "title": "Big Buck Bunny",
-    "year": 2008,
-    "genre": "Animation, Comedy, Family",
+    "title": "Captain America: Brave New World",
+    "year": 2025,
+    "genre": "Superhero, Action, Sci-Fi",
     "rating": 7.8,
-    "plot": "A large and lovable rabbit deals with three tiny bullies, led by a flying squirrel, who are determined to squelch his happiness.",
-    "director": "Sacha Goedegebure",
-    "cast": ["Frank Pelle", "Mauricio Baiocchi", "Ton Roosendaal"],
+    "plot": "Sam Wilson, the new Captain America, finds himself in the middle of an international incident and must discover the motive behind a nefarious global plan.",
+    "director": "Julius Onah",
+    "cast": ["Anthony Mackie", "Harrison Ford", "Shira Haas"],
     "runtime": 10,
-    "poster_url": "https://peach.blender.org/wp-content/uploads/bbb-splash.png",
-    "backdrop_url": "https://peach.blender.org/wp-content/uploads/poster_bunny_bunny.jpg",
-    "video_url": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    "trailer_url": "https://www.youtube.com/watch?v=YE7VzlLtp-4",
+    "poster_url": "https://musicart.xboxlive.com/7/3d0c6e00-0000-0000-0000-000000000002/504/image.jpg",
+    "backdrop_url": "https://assetsio.gnwcdn.com/Captain-America_Brave-New-World-cropped-banner.jpg",
+    "video_url": "http://103.145.232.246/Data/movies/Hollywood/2025/Captain%20America%20Brave%20New%20World%20%282025%29/Captain%20America%20Brave%20New%20World.mp4",
+    "trailer_url": "https://www.youtube.com/watch?v=1pHDWnXmK7Y",
     "subtitles": [
       {
         "language": "en",
@@ -20,9 +20,9 @@
       }
     ],
     "quality": "1080p",
-    "file_size": "158MB",
-    "added_date": "2024-01-15",
-    "tmdb_id": 10378,
+    "file_size": "2Gb",
+    "added_date": "2025-07-21",
+    "tmdb_id": 822119,
     "m3u8_url": "",
     "custom_sources": []
   },
