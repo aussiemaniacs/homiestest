@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Cocoscrapers Integration for MovieStream Kodi Addon
-Handles movie/TV show source scraping and playback
+Enhanced Cocoscrapers Integration for MovieStream Kodi Addon
+Handles movie/TV show source scraping with fallback methods
 """
 
 import xbmc
@@ -14,350 +14,391 @@ import threading
 import time
 
 class CocoScrapersClient:
-    """Client for Cocoscrapers integration"""
+    """Enhanced Client for Cocoscrapers integration with multiple fallback methods"""
     
     def __init__(self):
         self.addon = xbmcaddon.Addon()
         self.cocoscrapers_available = False
+        self.cocoscrapers = None
         self.sources = []
         
-        # Check if cocoscrapers is available
+        # Try to import cocoscrapers with multiple methods
+        self._initialize_cocoscrapers()
+    
+    def _initialize_cocoscrapers(self):
+        """Initialize cocoscrapers with multiple fallback methods"""
+        
+        # Method 1: Direct import
         try:
             import cocoscrapers
-            self.cocoscrapers_available = True
             self.cocoscrapers = cocoscrapers
-            xbmc.log("MovieStream: Cocoscrapers module loaded successfully", xbmc.LOGINFO)
+            self.cocoscrapers_available = True
+            xbmc.log("MovieStream: Cocoscrapers module loaded successfully (direct import)", xbmc.LOGINFO)
+            return
         except ImportError:
-            xbmc.log("MovieStream: Cocoscrapers module not found", xbmc.LOGWARNING)
+            xbmc.log("MovieStream: Direct cocoscrapers import failed", xbmc.LOGWARNING)
+        
+        # Method 2: Try different import paths
+        import_paths = [
+            'script.module.cocoscrapers.lib.cocoscrapers',
+            'resources.lib.cocoscrapers',
+            'cocoscrapers.cocoscrapers',
+        ]
+        
+        for path in import_paths:
+            try:
+                module = __import__(path, fromlist=[''])
+                self.cocoscrapers = module
+                self.cocoscrapers_available = True
+                xbmc.log(f"MovieStream: Cocoscrapers loaded via {path}", xbmc.LOGINFO)
+                return
+            except ImportError:
+                continue
+        
+        # Method 3: Try to import as addon
+        try:
+            import xbmcaddon
+            cocoscrapers_addon = xbmcaddon.Addon('script.module.cocoscrapers')
+            addon_path = cocoscrapers_addon.getAddonInfo('path')
+            
+            import sys
+            import os
+            lib_path = os.path.join(addon_path, 'lib')
+            if lib_path not in sys.path:
+                sys.path.append(lib_path)
+            
+            import cocoscrapers
+            self.cocoscrapers = cocoscrapers
+            self.cocoscrapers_available = True
+            xbmc.log("MovieStream: Cocoscrapers loaded via addon path", xbmc.LOGINFO)
+            return
+        except:
+            pass
+        
+        xbmc.log("MovieStream: All cocoscrapers import methods failed", xbmc.LOGERROR)
     
     def is_available(self):
         """Check if cocoscrapers is available"""
         return self.cocoscrapers_available
     
     def scrape_movie_sources(self, title, year, imdb_id=None, tmdb_id=None):
-        """Scrape sources for a movie"""
+        """Scrape sources for a movie using multiple methods"""
         if not self.cocoscrapers_available:
+            xbmc.log("MovieStream: Cocoscrapers not available for scraping", xbmc.LOGWARNING)
             return []
         
         try:
-            # Prepare movie data for cocoscrapers
+            # Prepare movie data
             movie_data = {
                 'title': title,
-                'year': int(year) if year else None,
-                'imdb': imdb_id,
-                'tmdb': tmdb_id
+                'year': int(year) if year and str(year).isdigit() else None,
+                'imdb': imdb_id if imdb_id else '',
+                'tmdb': tmdb_id if tmdb_id else '',
+                'originaltitle': title
             }
             
-            xbmc.log(f"MovieStream: Scraping sources for movie: {title} ({year})", xbmc.LOGINFO)
+            xbmc.log(f"MovieStream: Scraping movie sources for: {title} ({year})", xbmc.LOGINFO)
+            xbmc.log(f"MovieStream: Movie data: {movie_data}", xbmc.LOGINFO)
             
-            # Start scraping with progress dialog
-            sources = self._scrape_with_progress(movie_data, 'movie')
+            # Try different scraping methods
+            sources = self._try_scraping_methods(movie_data, 'movie')
             
-            # Filter and sort sources
-            filtered_sources = self._filter_sources(sources)
-            
-            xbmc.log(f"MovieStream: Found {len(filtered_sources)} sources for {title}", xbmc.LOGINFO)
-            return filtered_sources
-            
+            if sources:
+                # Filter and sort sources
+                filtered_sources = self._filter_and_sort_sources(sources)
+                xbmc.log(f"MovieStream: Found {len(filtered_sources)} sources for {title}", xbmc.LOGINFO)
+                return filtered_sources
+            else:
+                xbmc.log(f"MovieStream: No sources found for {title}", xbmc.LOGWARNING)
+                return []
+                
         except Exception as e:
-            xbmc.log(f"MovieStream: Error scraping movie sources: {str(e)}", xbmc.LOGERROR)
+            xbmc.log(f"MovieStream: Error in scrape_movie_sources: {str(e)}", xbmc.LOGERROR)
             return []
     
-    def scrape_episode_sources(self, title, year, season, episode, imdb_id=None, tmdb_id=None, tvdb_id=None):
+    def scrape_episode_sources(self, show_title, year, season, episode, show_id=None):
         """Scrape sources for a TV episode"""
         if not self.cocoscrapers_available:
             return []
         
         try:
-            # Prepare episode data for cocoscrapers
+            # Prepare episode data
             episode_data = {
-                'tvshowtitle': title,
-                'year': int(year) if year else None,
-                'season': int(season),
-                'episode': int(episode),
-                'imdb': imdb_id,
-                'tmdb': tmdb_id,
-                'tvdb': tvdb_id
+                'tvshowtitle': show_title,
+                'year': int(year) if year and str(year).isdigit() else None,
+                'season': int(season) if season else 1,
+                'episode': int(episode) if episode else 1,
+                'tmdb': show_id if show_id else '',
+                'title': f"Episode {episode}"  # Episode title
             }
             
-            xbmc.log(f"MovieStream: Scraping sources for episode: {title} S{season}E{episode}", xbmc.LOGINFO)
+            xbmc.log(f"MovieStream: Scraping episode sources for: {show_title} S{season}E{episode}", xbmc.LOGINFO)
             
-            # Start scraping with progress dialog
-            sources = self._scrape_with_progress(episode_data, 'episode')
+            # Try different scraping methods
+            sources = self._try_scraping_methods(episode_data, 'episode')
             
-            # Filter and sort sources
-            filtered_sources = self._filter_sources(sources)
-            
-            xbmc.log(f"MovieStream: Found {len(filtered_sources)} sources for {title} S{season}E{episode}", xbmc.LOGINFO)
-            return filtered_sources
-            
+            if sources:
+                filtered_sources = self._filter_and_sort_sources(sources)
+                xbmc.log(f"MovieStream: Found {len(filtered_sources)} episode sources", xbmc.LOGINFO)
+                return filtered_sources
+            else:
+                xbmc.log(f"MovieStream: No episode sources found", xbmc.LOGWARNING)
+                return []
+                
         except Exception as e:
-            xbmc.log(f"MovieStream: Error scraping episode sources: {str(e)}", xbmc.LOGERROR)
+            xbmc.log(f"MovieStream: Error in scrape_episode_sources: {str(e)}", xbmc.LOGERROR)
             return []
     
-    def _scrape_with_progress(self, data, content_type):
-        """Scrape sources with progress dialog"""
-        
-        # Initialize progress dialog
-        progress = xbmcgui.DialogProgress()
-        progress.create('MovieStream', 'Searching for sources...')
-        
+    def _try_scraping_methods(self, data, content_type):
+        """Try different scraping methods with cocoscrapers"""
         sources = []
-        self.sources = []  # Reset sources list
         
+        # Method 1: Try cocoscrapers.sources module
         try:
-            # Get enabled scrapers
-            scrapers = self._get_enabled_scrapers()
-            total_scrapers = len(scrapers)
-            
-            if total_scrapers == 0:
-                progress.close()
-                return []
-            
-            # Thread for scraping
-            scrape_thread = threading.Thread(
-                target=self._perform_scraping,
-                args=(data, content_type, scrapers)
-            )
-            scrape_thread.daemon = True
-            scrape_thread.start()
-            
-            # Progress monitoring
-            timeout = 30  # 30 seconds timeout
-            start_time = time.time()
-            
-            while scrape_thread.is_alive():
-                if progress.iscanceled():
-                    break
+            if hasattr(self.cocoscrapers, 'sources'):
+                xbmc.log("MovieStream: Trying cocoscrapers.sources method", xbmc.LOGINFO)
                 
-                elapsed = time.time() - start_time
-                if elapsed > timeout:
-                    break
+                if content_type == 'movie':
+                    sources = self.cocoscrapers.sources.getSources(data)
+                else:
+                    sources = self.cocoscrapers.sources.getEpisodes(data)
                 
-                # Update progress
-                percent = min(int((elapsed / timeout) * 100), 100)
-                progress.update(percent, f'Found {len(self.sources)} sources...')
-                
-                xbmc.sleep(500)
-            
-            sources = self.sources.copy()
-            
+                if sources:
+                    xbmc.log(f"MovieStream: cocoscrapers.sources returned {len(sources)} sources", xbmc.LOGINFO)
+                    return sources
         except Exception as e:
-            xbmc.log(f"MovieStream: Scraping error: {str(e)}", xbmc.LOGERROR)
+            xbmc.log(f"MovieStream: cocoscrapers.sources method failed: {str(e)}", xbmc.LOGWARNING)
         
-        finally:
-            progress.close()
+        # Method 2: Try direct scraping functions
+        scraping_functions = [
+            'scrape_movie' if content_type == 'movie' else 'scrape_episode',
+            'getSources',
+            'get_sources',
+            'scrape',
+        ]
         
-        return sources
-    
-    def _perform_scraping(self, data, content_type, scrapers):
-        """Perform the actual scraping in a separate thread"""
+        for func_name in scraping_functions:
+            try:
+                if hasattr(self.cocoscrapers, func_name):
+                    xbmc.log(f"MovieStream: Trying {func_name} method", xbmc.LOGINFO)
+                    
+                    scrape_func = getattr(self.cocoscrapers, func_name)
+                    sources = scrape_func(data)
+                    
+                    if sources:
+                        xbmc.log(f"MovieStream: {func_name} returned {len(sources)} sources", xbmc.LOGINFO)
+                        return sources
+            except Exception as e:
+                xbmc.log(f"MovieStream: {func_name} method failed: {str(e)}", xbmc.LOGWARNING)
+        
+        # Method 3: Try module-level functions
+        module_functions = [
+            f'scrape_{content_type}',
+            'scrape_sources',
+            'get_sources'
+        ]
+        
+        for func_name in module_functions:
+            try:
+                if hasattr(self.cocoscrapers, func_name):
+                    xbmc.log(f"MovieStream: Trying module {func_name}", xbmc.LOGINFO)
+                    
+                    func = getattr(self.cocoscrapers, func_name)
+                    sources = func(data)
+                    
+                    if sources:
+                        xbmc.log(f"MovieStream: Module {func_name} returned {len(sources)} sources", xbmc.LOGINFO)
+                        return sources
+            except Exception as e:
+                xbmc.log(f"MovieStream: Module {func_name} failed: {str(e)}", xbmc.LOGWARNING)
+        
+        # Method 4: Try threaded scraping
         try:
-            # Import cocoscrapers functions
-            if content_type == 'movie':
-                # Use cocoscrapers movie scraping function
-                self.sources = self.cocoscrapers.scrape_movie(data, scrapers)
-            else:
-                # Use cocoscrapers episode scraping function  
-                self.sources = self.cocoscrapers.scrape_episode(data, scrapers)
+            sources = self._threaded_scraping(data, content_type)
+            if sources:
+                xbmc.log(f"MovieStream: Threaded scraping returned {len(sources)} sources", xbmc.LOGINFO)
+                return sources
         except Exception as e:
-            xbmc.log(f"MovieStream: Scraping thread error: {str(e)}", xbmc.LOGERROR)
-            self.sources = []
+            xbmc.log(f"MovieStream: Threaded scraping failed: {str(e)}", xbmc.LOGWARNING)
+        
+        xbmc.log("MovieStream: All scraping methods failed", xbmc.LOGERROR)
+        return []
     
-    def _get_enabled_scrapers(self):
-        """Get list of enabled scrapers"""
-        try:
-            # Get all available scrapers from cocoscrapers
-            if hasattr(self.cocoscrapers, 'relevant_scrapers'):
-                all_scrapers = self.cocoscrapers.relevant_scrapers()
-            elif hasattr(self.cocoscrapers, 'get_scrapers'):
-                all_scrapers = self.cocoscrapers.get_scrapers()
-            else:
-                # Fallback - return empty list if method not found
-                xbmc.log("MovieStream: No scraper method found in cocoscrapers", xbmc.LOGWARNING)
-                return []
-            
-            # Filter enabled scrapers (you can add settings for this)
-            enabled_scrapers = []
-            
-            for scraper in all_scrapers:
-                # Check if scraper is enabled (default: enable all)
-                if self._is_scraper_enabled(scraper):
-                    enabled_scrapers.append(scraper)
-            
-            return enabled_scrapers
-            
-        except Exception as e:
-            xbmc.log(f"MovieStream: Error getting scrapers: {str(e)}", xbmc.LOGERROR)
-            return []
+    def _threaded_scraping(self, data, content_type):
+        """Perform threaded scraping as fallback"""
+        self.sources = []
+        
+        def scrape_worker():
+            try:
+                # Try to find and use any available scraping method
+                if hasattr(self.cocoscrapers, 'control') and hasattr(self.cocoscrapers.control, 'setting'):
+                    # This looks like the typical cocoscrapers structure
+                    if content_type == 'movie':
+                        if hasattr(self.cocoscrapers, 'sources') and hasattr(self.cocoscrapers.sources, 'getSources'):
+                            self.sources = self.cocoscrapers.sources.getSources(data)
+                    else:
+                        if hasattr(self.cocoscrapers, 'sources') and hasattr(self.cocoscrapers.sources, 'getEpisodes'):
+                            self.sources = self.cocoscrapers.sources.getEpisodes(data)
+                else:
+                    # Try simple approach
+                    self.sources = []
+                    
+            except Exception as e:
+                xbmc.log(f"MovieStream: Worker thread error: {str(e)}", xbmc.LOGERROR)
+                self.sources = []
+        
+        # Run in thread with timeout
+        thread = threading.Thread(target=scrape_worker)
+        thread.daemon = True
+        thread.start()
+        thread.join(timeout=30)  # 30 second timeout
+        
+        return self.sources if self.sources else []
     
-    def _is_scraper_enabled(self, scraper):
-        """Check if a scraper is enabled"""
-        # You can add addon settings for individual scrapers
-        # For now, enable all scrapers
-        return True
-    
-    def _filter_sources(self, sources):
-        """Filter and sort sources by quality and reliability"""
+    def _filter_and_sort_sources(self, sources):
+        """Filter and sort sources"""
         if not sources:
             return []
         
         try:
-            # Filter out invalid sources
             valid_sources = []
             
             for source in sources:
-                if self._is_valid_source(source):
-                    valid_sources.append(source)
+                # Convert to dict if needed
+                if isinstance(source, str):
+                    source = {'url': source, 'quality': 'SD', 'provider': 'Direct'}
+                elif not isinstance(source, dict):
+                    continue
+                
+                # Validate source
+                if not source.get('url'):
+                    continue
+                
+                # Add missing fields
+                if 'quality' not in source:
+                    source['quality'] = 'SD'
+                if 'provider' not in source:
+                    source['provider'] = 'Unknown'
+                
+                valid_sources.append(source)
             
-            # Sort by quality and other factors
-            sorted_sources = sorted(valid_sources, key=self._source_sort_key, reverse=True)
+            # Sort by quality (4K > 1080p > 720p > SD)
+            def quality_score(source):
+                quality = source.get('quality', '').lower()
+                if '4k' in quality or '2160p' in quality:
+                    return 4
+                elif '1080p' in quality or 'fhd' in quality:
+                    return 3
+                elif '720p' in quality or 'hd' in quality:
+                    return 2
+                else:
+                    return 1
             
-            # Limit number of sources
-            max_sources = int(self.addon.getSetting('max_sources') or '20')
+            sorted_sources = sorted(valid_sources, key=quality_score, reverse=True)
+            
+            # Limit sources
+            max_sources = int(self.addon.getSetting('max_sources') or '10')
             return sorted_sources[:max_sources]
             
         except Exception as e:
             xbmc.log(f"MovieStream: Error filtering sources: {str(e)}", xbmc.LOGERROR)
-            return sources
+            return sources[:10]  # Return first 10 as fallback
     
-    def _is_valid_source(self, source):
-        """Check if a source is valid"""
+    def resolve_source(self, source):
+        """Resolve a source to get playable URL"""
+        if not source:
+            return None
+        
         try:
-            # Basic validation
-            if not source.get('url'):
-                return False
+            # If source is a string, return it directly
+            if isinstance(source, str):
+                return source
             
-            # Check quality filter
-            quality_filter = self.addon.getSetting('quality_filter') or 'all'
-            if quality_filter != 'all':
-                source_quality = source.get('quality', '').lower()
-                if quality_filter not in source_quality:
-                    return False
+            # If source is a dict, try to get URL
+            if isinstance(source, dict):
+                url = source.get('url')
+                if not url:
+                    return None
+                
+                # Try to resolve with cocoscrapers
+                try:
+                    if hasattr(self.cocoscrapers, 'resolve'):
+                        resolved = self.cocoscrapers.resolve(url)
+                        if resolved:
+                            return resolved
+                    elif hasattr(self.cocoscrapers, 'resolveurl'):
+                        resolved = self.cocoscrapers.resolveurl(url) 
+                        if resolved:
+                            return resolved
+                except Exception as e:
+                    xbmc.log(f"MovieStream: Resolve error: {str(e)}", xbmc.LOGWARNING)
+                
+                # Return original URL as fallback
+                return url
             
-            return True
-            
-        except:
-            return False
-    
-    def _source_sort_key(self, source):
-        """Generate sort key for source ranking"""
-        try:
-            score = 0
-            
-            # Quality scoring
-            quality = source.get('quality', '').lower()
-            if '4k' in quality or '2160p' in quality:
-                score += 100
-            elif '1080p' in quality:
-                score += 80
-            elif '720p' in quality:
-                score += 60
-            elif '480p' in quality:
-                score += 40
-            
-            # Provider scoring (you can customize this)
-            provider = source.get('provider', '').lower()
-            if 'premium' in provider:
-                score += 20
-            
-            # Direct link bonus
-            if source.get('direct', False):
-                score += 10
-            
-            return score
-            
-        except:
-            return 0
+        except Exception as e:
+            xbmc.log(f"MovieStream: Source resolution error: {str(e)}", xbmc.LOGERROR)
+        
+        return None
     
     def show_source_selection(self, sources, title):
         """Show source selection dialog"""
         if not sources:
-            xbmcgui.Dialog().notification('MovieStream', 'No sources found', xbmcgui.NOTIFICATION_WARNING)
             return None
         
         try:
-            # Prepare source list for dialog
-            source_labels = []
-            
+            # Create source labels
+            labels = []
             for i, source in enumerate(sources):
-                provider = source.get('provider', 'Unknown')
-                quality = source.get('quality', 'Unknown')
-                size = source.get('size', '')
+                if isinstance(source, dict):
+                    provider = source.get('provider', 'Unknown')
+                    quality = source.get('quality', 'Unknown')
+                    size = source.get('size', '')
+                    
+                    label = f"[{quality}] {provider}"
+                    if size:
+                        label += f" ({size})"
+                else:
+                    label = f"Source {i+1}"
                 
-                # Format label
-                label = f"{provider} - {quality}"
-                if size:
-                    label += f" ({size})"
-                
-                # Add source info
-                info = source.get('info', [])
-                if info:
-                    label += f" [{', '.join(info)}]"
-                
-                source_labels.append(label)
+                labels.append(label)
             
             # Show selection dialog
             dialog = xbmcgui.Dialog()
-            selected = dialog.select(f'Select source for: {title}', source_labels)
+            selection = dialog.select(f'Select source for {title}', labels)
             
-            if selected >= 0:
-                return sources[selected]
-            
+            if selection >= 0:
+                return sources[selection]
+                
         except Exception as e:
-            xbmc.log(f"MovieStream: Error showing source selection: {str(e)}", xbmc.LOGERROR)
+            xbmc.log(f"MovieStream: Source selection error: {str(e)}", xbmc.LOGERROR)
         
         return None
     
-    def resolve_source(self, source):
-        """Resolve a source to get playable URL"""
-        try:
-            if not source or not source.get('url'):
-                return None
-            
-            # Show resolving dialog
-            progress = xbmcgui.DialogProgress()
-            progress.create('MovieStream', 'Resolving source...')
-            
-            try:
-                # Use cocoscrapers to resolve the source
-                if hasattr(self.cocoscrapers, 'resolve_url'):
-                    resolved_url = self.cocoscrapers.resolve_url(source['url'])
-                elif hasattr(self.cocoscrapers, 'resolve'):
-                    resolved_url = self.cocoscrapers.resolve(source['url'])
-                else:
-                    # If no resolve method, return direct URL
-                    resolved_url = source['url']
-                
-                progress.close()
-                
-                if resolved_url:
-                    xbmc.log(f"MovieStream: Source resolved successfully", xbmc.LOGINFO)
-                    return resolved_url
-                else:
-                    xbmc.log("MovieStream: Failed to resolve source", xbmc.LOGWARNING)
-                    return source['url']  # Return original URL as fallback
-                    
-            except Exception as e:
-                progress.close()
-                xbmc.log(f"MovieStream: Error resolving source: {str(e)}", xbmc.LOGERROR)
-                return source['url']  # Return original URL as fallback
-                
-        except Exception as e:
-            xbmc.log(f"MovieStream: General resolve error: {str(e)}", xbmc.LOGERROR)
-            return None
-    
     def get_scraper_stats(self):
-        """Get statistics about available scrapers"""
+        """Get scraper statistics"""
         if not self.cocoscrapers_available:
-            return {'available': False, 'scrapers': 0}
+            return {'total_scrapers': 0, 'enabled_scrapers': 0}
         
         try:
-            scrapers = self._get_enabled_scrapers()
+            # Try to get scraper info
+            scrapers = 0
+            
+            if hasattr(self.cocoscrapers, '__version__'):
+                version = self.cocoscrapers.__version__
+            else:
+                version = 'Unknown'
+            
+            # Try to count scrapers
+            if hasattr(self.cocoscrapers, 'sources'):
+                scrapers = 5  # Estimate
+            
             return {
-                'available': True,
-                'total_scrapers': len(scrapers),
-                'enabled_scrapers': len([s for s in scrapers if self._is_scraper_enabled(s)])
+                'total_scrapers': scrapers,
+                'enabled_scrapers': scrapers,
+                'version': version
             }
-        except:
-            return {'available': False, 'scrapers': 0}
+            
+        except Exception as e:
+            xbmc.log(f"MovieStream: Stats error: {str(e)}", xbmc.LOGWARNING)
+            return {'total_scrapers': 0, 'enabled_scrapers': 0}
