@@ -860,6 +860,7 @@ def tools_menu():
         ('🔍 Test TMDB Connection', 'test_tmdb', 'Test connection to TMDB API'),
         ('📁 Test GitHub Connection', 'test_github', 'Test connection to GitHub repository'),
         (f'🎬 Cocoscrapers Status', 'cocoscrapers_status', f'Status: {cocoscrapers_status}'),
+        ('🧪 Test Cocoscrapers', 'test_cocoscrapers', 'Test Cocoscrapers with sample movie'),
         (f'💎 Debrid Account Status', 'debrid_status', f'Status: {debrid_status}'),
         ('🎮 Test Movie Playback', 'test_movie_playback', 'Test sample movie playback'),
         ('ℹ️ Debug Information', 'debug_info', 'Show addon debug information'),
