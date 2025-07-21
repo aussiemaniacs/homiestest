@@ -129,7 +129,7 @@ class MockXBMCVFS:
 
 # Mock the Kodi modules
 sys.modules['xbmc'] = MockXBMC()
-sys.modules['xbmcaddon'] = MockXBMCAddon
+sys.modules['xbmcaddon'] = MockXBMCAddonModule()
 sys.modules['xbmcplugin'] = MockXBMCPlugin()
 sys.modules['xbmcgui'] = MockXBMCGUI()
 sys.modules['xbmcvfs'] = MockXBMCVFS()
