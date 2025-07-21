@@ -1293,6 +1293,8 @@ def router(paramstring):
             test_tmdb()
         elif action == 'test_github':
             test_github()
+        elif action == 'test_cocoscrapers':
+            test_cocoscrapers()
         elif action == 'test_movie_playback':
             test_movie_playback()
         elif action == 'debug_info':
