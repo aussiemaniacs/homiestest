@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-MovieStream Pro - Complete Kodi Addon with Cocoscrapers Integration
+MovieStream Pro - Complete Kodi Addon with Enhanced Cocoscrapers Integration
 Features: TMDB, GitHub, Cocoscrapers, Debrid Services, TV Shows, Watchlist, Favorites
-Version: 2.0.0 - FIXED CLIENT INITIALIZATION
+Version: 2.0.1 - ENHANCED CLIENT INTEGRATION & COCOSCRAPERS FIXES
 """
 
 import sys
@@ -108,12 +108,21 @@ CLIENTS_INITIALIZED = False
 if IMPORTS_SUCCESS:
     xbmc.log("MovieStream: Attempting to initialize enhanced clients...", xbmc.LOGINFO)
     try:
+        # Initialize Cocoscrapers client first
         cocoscrapers_client = CocoScrapersClient()
         debrid_client = DebridClient()
         tvshow_client = TVShowClient()
         watchlist_manager = WatchlistManager()
+        
         CLIENTS_INITIALIZED = True
         xbmc.log("MovieStream: Enhanced clients initialized successfully", xbmc.LOGINFO)
+        
+        # Log Cocoscrapers availability specifically
+        if cocoscrapers_client and cocoscrapers_client.is_available():
+            xbmc.log("MovieStream: Cocoscrapers is available and ready", xbmc.LOGINFO)
+        else:
+            xbmc.log("MovieStream: Cocoscrapers not available but other enhanced features ready", xbmc.LOGWARNING)
+            
     except Exception as e:
         xbmc.log(f"MovieStream: Enhanced client initialization error: {str(e)}", xbmc.LOGERROR)
         CLIENTS_INITIALIZED = False
@@ -132,7 +141,11 @@ def list_categories():
     xbmcplugin.setContent(plugin_handle, 'videos')
     
     # Check Cocoscrapers status for display
-    cocoscrapers_status = "✅" if CLIENTS_INITIALIZED and cocoscrapers_client and hasattr(cocoscrapers_client, 'is_available') and cocoscrapers_client.is_available() else "❌"
+    cocoscrapers_status = "✅"
+    if CLIENTS_INITIALIZED and cocoscrapers_client and cocoscrapers_client.is_available():
+        cocoscrapers_status = "✅"
+    else:
+        cocoscrapers_status = "❌"
     
     categories = [
         (f'🎬 Movies', 'movies_menu', 'DefaultMovies.png'),
@@ -157,7 +170,7 @@ def list_categories():
     
     # Add status info at the bottom
     if BASIC_FUNCTIONALITY_READY:
-        status_mode = 'Pro Mode' if CLIENTS_INITIALIZED else 'Basic Mode'
+        status_mode = 'Pro Mode' if (CLIENTS_INITIALIZED and cocoscrapers_client and cocoscrapers_client.is_available()) else 'Basic Mode'
         status_info = f"Cocoscrapers: {cocoscrapers_status} | Status: {status_mode} ✅"
     else:
         status_info = f"Status: Error - Check Settings ❌"
@@ -331,7 +344,7 @@ def add_movie_item(movie, from_tmdb=False):
             context_items = watchlist_manager.get_context_menu_items(movie_data)
             
             # Add source selection context menu
-            if cocoscrapers_client and hasattr(cocoscrapers_client, 'is_available') and cocoscrapers_client.is_available():
+            if cocoscrapers_client and cocoscrapers_client.is_available():
                 context_items.append((
                     'Select Source',
                     f'RunPlugin({get_url(action="select_movie_source", movie_data=json.dumps(movie_data))})'
@@ -470,187 +483,126 @@ def get_github_collection_direct():
         return []
 
 def play_movie(movie_data_str):
-    """Play a movie with Cocoscrapers integration - PRIORITY 1"""
-    xbmc.log("MovieStream: PLAY_MOVIE CALLED", xbmc.LOGINFO)
+    """Enhanced play movie with comprehensive Cocoscrapers integration"""
+    xbmc.log("MovieStream: PLAY_MOVIE CALLED - ENHANCED VERSION", xbmc.LOGINFO)
     
     try:
         movie_data = json.loads(movie_data_str)
         movie_title = movie_data.get('title', 'Unknown Movie')
-        xbmc.log(f"MovieStream: Playing movie: {movie_title}", xbmc.LOGINFO)
+        movie_year = movie_data.get('year', '')
+        
+        xbmc.log(f"MovieStream: Playing movie: {movie_title} ({movie_year})", xbmc.LOGINFO)
         
         # Show immediate feedback to user
         xbmcgui.Dialog().notification('MovieStream', f'Loading {movie_title}...', xbmcgui.NOTIFICATION_INFO, 2000)
         
-        # Debug logging for troubleshooting
+        # Enhanced debug logging
         xbmc.log(f"MovieStream: CLIENTS_INITIALIZED: {CLIENTS_INITIALIZED}", xbmc.LOGINFO)
-        xbmc.log(f"MovieStream: Cocoscrapers enabled: {addon.getSettingBool('enable_cocoscrapers')}", xbmc.LOGINFO)
+        xbmc.log(f"MovieStream: Cocoscrapers enabled in settings: {addon.getSettingBool('enable_cocoscrapers')}", xbmc.LOGINFO)
         xbmc.log(f"MovieStream: Cocoscrapers client exists: {cocoscrapers_client is not None}", xbmc.LOGINFO)
         
-        # PRIORITY 1: Try Cocoscrapers (if enabled and available)
-        cocoscrapers_available = False
         if cocoscrapers_client:
-            if hasattr(cocoscrapers_client, 'is_available'):
-                cocoscrapers_available = cocoscrapers_client.is_available()
-                xbmc.log(f"MovieStream: Cocoscrapers is_available(): {cocoscrapers_available}", xbmc.LOGINFO)
-            else:
-                cocoscrapers_available = True  # Assume available if method doesn't exist
-                xbmc.log("MovieStream: Cocoscrapers is_available() method not found, assuming available", xbmc.LOGINFO)
+            xbmc.log(f"MovieStream: Cocoscrapers is_available: {cocoscrapers_client.is_available()}", xbmc.LOGINFO)
         
+        # PRIORITY 1: Try Enhanced Cocoscrapers Integration
         if (CLIENTS_INITIALIZED and 
             addon.getSettingBool('enable_cocoscrapers') and 
-            cocoscrapers_client and
-            cocoscrapers_available):
+            cocoscrapers_client and 
+            cocoscrapers_client.is_available()):
             
-            xbmc.log("MovieStream: Using Cocoscrapers (PRIORITY 1)", xbmc.LOGINFO)
+            xbmc.log("MovieStream: Using Enhanced Cocoscrapers Integration (PRIORITY 1)", xbmc.LOGINFO)
             
             try:
-                # Show progress dialog
-                progress = xbmcgui.DialogProgress()
-                progress.create('MovieStream', 'Searching for sources...')
-                progress.update(10, 'Initializing Cocoscrapers...')
-                
-                # Get IMDB ID for better scraping results
+                # Get additional metadata for better scraping
                 imdb_id = movie_data.get('imdb_id', '')
-                if not imdb_id and movie_data.get('tmdb_id') and tmdb_client:
-                    progress.update(20, 'Getting movie details...')
+                tmdb_id = movie_data.get('tmdb_id', '')
+                
+                # Try to get IMDB ID from TMDB if missing
+                if not imdb_id and tmdb_id and tmdb_client:
                     try:
                         if hasattr(tmdb_client, 'get_movie_details'):
-                            movie_details = tmdb_client.get_movie_details(movie_data['tmdb_id'])
-                            if movie_details and movie_details.get('imdb_id'):
-                                imdb_id = movie_details['imdb_id']
+                            details = tmdb_client.get_movie_details(tmdb_id)
+                            if details and details.get('imdb_id'):
+                                imdb_id = details['imdb_id']
                                 xbmc.log(f"MovieStream: Retrieved IMDB ID: {imdb_id}", xbmc.LOGINFO)
                     except Exception as e:
                         xbmc.log(f"MovieStream: Error getting IMDB ID: {str(e)}", xbmc.LOGWARNING)
                 
-                # Prepare movie info for scraping
-                movie_info = {
-                    'title': movie_data.get('title', ''),
-                    'year': movie_data.get('year', ''),
-                    'tmdb_id': movie_data.get('tmdb_id', ''),
-                    'imdb_id': imdb_id
-                }
+                xbmc.log(f"MovieStream: Scraping with - Title: {movie_title}, Year: {movie_year}, TMDB: {tmdb_id}, IMDB: {imdb_id}", xbmc.LOGINFO)
                 
-                xbmc.log(f"MovieStream: Scraping with movie info: {movie_info}", xbmc.LOGINFO)
-                
-                progress.update(40, 'Scraping sources...')
-                
-                # Try different scraping methods
-                sources = []
-                
-                # Method 1: Use scrape_movie_sources if available
-                if hasattr(cocoscrapers_client, 'scrape_movie_sources'):
-                    try:
-                        sources = cocoscrapers_client.scrape_movie_sources(
-                            title=movie_data['title'],
-                            year=movie_data['year'],
-                            tmdb_id=movie_data.get('tmdb_id'),
-                            imdb_id=imdb_id
-                        )
-                        xbmc.log(f"MovieStream: scrape_movie_sources returned {len(sources) if sources else 0} sources", xbmc.LOGINFO)
-                    except Exception as e:
-                        xbmc.log(f"MovieStream: scrape_movie_sources error: {str(e)}", xbmc.LOGERROR)
-                
-                # Method 2: Use scrape_sources if scrape_movie_sources failed
-                if not sources and hasattr(cocoscrapers_client, 'scrape_sources'):
-                    try:
-                        sources = cocoscrapers_client.scrape_sources(movie_info, 'movie')
-                        xbmc.log(f"MovieStream: scrape_sources returned {len(sources) if sources else 0} sources", xbmc.LOGINFO)
-                    except Exception as e:
-                        xbmc.log(f"MovieStream: scrape_sources error: {str(e)}", xbmc.LOGERROR)
-                
-                # Method 3: Use get_sources if other methods failed
-                if not sources and hasattr(cocoscrapers_client, 'get_sources'):
-                    try:
-                        sources = cocoscrapers_client.get_sources(movie_info)
-                        xbmc.log(f"MovieStream: get_sources returned {len(sources) if sources else 0} sources", xbmc.LOGINFO)
-                    except Exception as e:
-                        xbmc.log(f"MovieStream: get_sources error: {str(e)}", xbmc.LOGERROR)
-                
-                progress.update(70, f'Found {len(sources) if sources else 0} sources...')
+                # Use the enhanced cocoscrapers client
+                sources = cocoscrapers_client.scrape_movie_sources(
+                    title=movie_title,
+                    year=movie_year,
+                    imdb_id=imdb_id,
+                    tmdb_id=tmdb_id
+                )
                 
                 if sources and len(sources) > 0:
-                    xbmc.log(f"MovieStream: Found {len(sources)} sources via Cocoscrapers", xbmc.LOGINFO)
+                    xbmc.log(f"MovieStream: Found {len(sources)} sources via Enhanced Cocoscrapers", xbmc.LOGINFO)
+                    
+                    # Show first few sources in log for debugging
+                    for i, source in enumerate(sources[:3]):
+                        if isinstance(source, dict):
+                            provider = source.get('provider', 'Unknown')
+                            quality = source.get('quality', 'Unknown')
+                            xbmc.log(f"MovieStream: Source {i+1}: {provider} - {quality}", xbmc.LOGINFO)
                     
                     # Filter with debrid services if available
-                    if CLIENTS_INITIALIZED and debrid_client and hasattr(debrid_client, 'is_available') and debrid_client.is_available():
+                    if CLIENTS_INITIALIZED and debrid_client and debrid_client.is_available():
                         try:
-                            if hasattr(debrid_client, 'filter_debrid_sources'):
-                                progress.update(80, 'Filtering debrid sources...')
-                                filtered_sources = debrid_client.filter_debrid_sources(sources)
-                                if filtered_sources:
-                                    sources = filtered_sources
-                                    xbmc.log(f"MovieStream: After debrid filtering: {len(sources)} sources", xbmc.LOGINFO)
+                            debrid_sources = debrid_client.filter_debrid_sources(sources)
+                            if debrid_sources:
+                                sources = debrid_sources
+                                xbmc.log(f"MovieStream: After debrid filtering: {len(sources)} sources", xbmc.LOGINFO)
                         except Exception as e:
                             xbmc.log(f"MovieStream: Debrid filtering error: {str(e)}", xbmc.LOGWARNING)
                     
-                    if sources:
-                        progress.update(90, 'Selecting best source...')
+                    # Select source
+                    selected_source = None
+                    
+                    if addon.getSettingBool('auto_play_best_source') and sources:
+                        selected_source = sources[0]  # Best source is first
+                        xbmc.log("MovieStream: Auto-playing best source", xbmc.LOGINFO)
+                    else:
+                        # Show source selection dialog
+                        selected_source = cocoscrapers_client.show_source_selection(sources, movie_title)
+                    
+                    if selected_source:
+                        xbmc.log(f"MovieStream: Selected source: {selected_source}", xbmc.LOGINFO)
                         
-                        # Auto-play best source or show selection
-                        selected_source = None
-                        if addon.getSettingBool('auto_play_best_source') and sources:
-                            selected_source = sources[0]  # Best source is first
-                            xbmc.log("MovieStream: Auto-playing best source", xbmc.LOGINFO)
-                        else:
-                            # Show source selection dialog
-                            if hasattr(cocoscrapers_client, 'show_source_selection'):
-                                try:
-                                    selected_source = cocoscrapers_client.show_source_selection(sources, movie_title)
-                                except:
-                                    selected_source = sources[0] if sources else None
-                            else:
-                                # Simple selection - just use first source
-                                selected_source = sources[0] if sources else None
+                        # Resolve the source
+                        resolved_url = cocoscrapers_client.resolve_source(selected_source)
                         
-                        if selected_source:
-                            progress.update(95, 'Resolving source...')
+                        if resolved_url:
+                            xbmc.log(f"MovieStream: Successfully resolved URL via Enhanced Cocoscrapers: {resolved_url[:50]}...", xbmc.LOGINFO)
                             
-                            # Try to resolve the source
-                            resolved_url = None
-                            
-                            # Method 1: Use resolve_source
-                            if hasattr(cocoscrapers_client, 'resolve_source'):
-                                try:
-                                    resolved_url = cocoscrapers_client.resolve_source(selected_source)
-                                    xbmc.log(f"MovieStream: resolve_source returned: {resolved_url is not None}", xbmc.LOGINFO)
-                                except Exception as e:
-                                    xbmc.log(f"MovieStream: resolve_source error: {str(e)}", xbmc.LOGERROR)
-                            
-                            # Method 2: Check if source has direct URL
-                            if not resolved_url and isinstance(selected_source, dict):
-                                resolved_url = selected_source.get('url') or selected_source.get('link')
-                                if resolved_url:
-                                    xbmc.log("MovieStream: Using direct URL from source", xbmc.LOGINFO)
-                            
-                            # Method 3: If source is a string, use it directly
-                            if not resolved_url and isinstance(selected_source, str):
-                                if selected_source.startswith('http'):
-                                    resolved_url = selected_source
-                                    xbmc.log("MovieStream: Using source as direct URL", xbmc.LOGINFO)
-                            
-                            progress.close()
-                            
-                            if resolved_url:
-                                xbmc.log(f"MovieStream: Successfully resolved URL via Cocoscrapers", xbmc.LOGINFO)
-                                play_resolved_url(resolved_url, movie_data)
+                            # Play the resolved URL
+                            if play_resolved_url(resolved_url, movie_data):
+                                # Add to history
+                                if CLIENTS_INITIALIZED and watchlist_manager:
+                                    try:
+                                        watchlist_manager.add_to_history(movie_data)
+                                    except:
+                                        pass
                                 return
                             else:
-                                xbmc.log("MovieStream: Failed to resolve Cocoscrapers source", xbmc.LOGWARNING)
-                                xbmcgui.Dialog().notification('MovieStream', 'Failed to resolve source', xbmcgui.NOTIFICATION_WARNING, 3000)
+                                xbmc.log("MovieStream: Failed to play resolved URL", xbmc.LOGERROR)
                         else:
-                            progress.close()
-                            xbmc.log("MovieStream: No source selected by user", xbmc.LOGINFO)
+                            xbmc.log("MovieStream: Failed to resolve source URL", xbmc.LOGWARNING)
+                            xbmcgui.Dialog().notification('MovieStream', 'Failed to resolve source', xbmcgui.NOTIFICATION_WARNING, 3000)
+                    else:
+                        xbmc.log("MovieStream: No source selected by user", xbmc.LOGINFO)
+                        
                 else:
-                    progress.close()
-                    xbmc.log("MovieStream: No sources found via Cocoscrapers", xbmc.LOGWARNING)
+                    xbmc.log("MovieStream: No sources found via Enhanced Cocoscrapers", xbmc.LOGWARNING)
                     xbmcgui.Dialog().notification('MovieStream', 'No sources found', xbmcgui.NOTIFICATION_WARNING, 3000)
                     
             except Exception as e:
-                if 'progress' in locals():
-                    progress.close()
-                xbmc.log(f"MovieStream: Cocoscrapers error: {str(e)}", xbmc.LOGERROR)
+                xbmc.log(f"MovieStream: Enhanced Cocoscrapers error: {str(e)}", xbmc.LOGERROR)
                 xbmcgui.Dialog().notification('MovieStream', f'Cocoscrapers error: {str(e)[:50]}', xbmcgui.NOTIFICATION_ERROR, 3000)
         else:
+            # Log why Cocoscrapers isn't being used
             reasons = []
             if not CLIENTS_INITIALIZED:
                 reasons.append("Enhanced clients not initialized")
@@ -658,19 +610,19 @@ def play_movie(movie_data_str):
                 reasons.append("Cocoscrapers disabled in settings")
             if not cocoscrapers_client:
                 reasons.append("Cocoscrapers client not available")
-            if not cocoscrapers_available:
-                reasons.append("Cocoscrapers not available")
+            elif not cocoscrapers_client.is_available():
+                reasons.append("Cocoscrapers not available/ready")
             
             reason_str = ", ".join(reasons)
             xbmc.log(f"MovieStream: Cocoscrapers not used - {reason_str}", xbmc.LOGINFO)
-            xbmcgui.Dialog().notification('MovieStream', f'Cocoscrapers not available: {reason_str[:30]}...', xbmcgui.NOTIFICATION_WARNING, 3000)
+            xbmcgui.Dialog().notification('MovieStream', f'Using fallback: {reason_str[:30]}...', xbmcgui.NOTIFICATION_INFO, 3000)
         
         # PRIORITY 2: Try M3U8 URL (for GitHub collection with streaming URLs)
         if movie_data.get('m3u8_url'):
             xbmc.log("MovieStream: Using M3U8 URL (PRIORITY 2)", xbmc.LOGINFO)
             try:
-                play_resolved_url(movie_data['m3u8_url'], movie_data)
-                return
+                if play_resolved_url(movie_data['m3u8_url'], movie_data):
+                    return
             except Exception as e:
                 xbmc.log(f"MovieStream: M3U8 playback error: {str(e)}", xbmc.LOGERROR)
         
@@ -678,8 +630,8 @@ def play_movie(movie_data_str):
         if movie_data.get('video_url'):
             xbmc.log("MovieStream: Using direct video URL (PRIORITY 3)", xbmc.LOGINFO)
             try:
-                play_resolved_url(movie_data['video_url'], movie_data)
-                return
+                if play_resolved_url(movie_data['video_url'], movie_data):
+                    return
             except Exception as e:
                 xbmc.log(f"MovieStream: Direct URL playback error: {str(e)}", xbmc.LOGERROR)
         
@@ -712,20 +664,21 @@ def play_resolved_url(url, item_data):
         if item_data.get('poster_url'):
             list_item.setArt({'thumb': item_data['poster_url']})
         
-        # Add to history if available
-        if CLIENTS_INITIALIZED and watchlist_manager and hasattr(watchlist_manager, 'add_to_history'):
-            try:
-                watchlist_manager.add_to_history(item_data)
-            except Exception as e:
-                xbmc.log(f"MovieStream: History add error: {str(e)}", xbmc.LOGWARNING)
+        # Handle M3U8/HLS streams
+        if '.m3u8' in url.lower() or 'm3u8' in url.lower():
+            list_item.setProperty('inputstream', 'inputstream.adaptive')
+            list_item.setProperty('inputstream.adaptive.manifest_type', 'hls')
+            xbmc.log("MovieStream: Set inputstream.adaptive for M3U8", xbmc.LOGINFO)
         
         # Set resolved URL for Kodi - CRITICAL: Use correct method name
         xbmcplugin.setResolvedUrl(plugin_handle, True, list_item)
         xbmc.log("MovieStream: Successfully set resolved URL", xbmc.LOGINFO)
+        return True
         
     except Exception as e:
         xbmc.log(f"MovieStream: Error playing resolved URL: {str(e)}", xbmc.LOGERROR)
         xbmcgui.Dialog().notification('MovieStream', 'URL resolution failed', xbmcgui.NOTIFICATION_ERROR)
+        return False
 
 def play_sample_video():
     """Play sample video as fallback"""
@@ -848,13 +801,10 @@ def tools_menu():
     xbmcplugin.setContent(plugin_handle, 'files')
     
     # Check addon status
-    cocoscrapers_status = "✅ Available" if (CLIENTS_INITIALIZED and cocoscrapers_client and 
-                                           hasattr(cocoscrapers_client, 'is_available') and 
-                                           cocoscrapers_client.is_available()) else "❌ Not Available"
+    cocoscrapers_available = (CLIENTS_INITIALIZED and cocoscrapers_client and cocoscrapers_client.is_available())
+    cocoscrapers_status = "✅ Available" if cocoscrapers_available else "❌ Not Available"
     
-    debrid_status = "✅ Available" if (CLIENTS_INITIALIZED and debrid_client and 
-                                     hasattr(debrid_client, 'is_available') and 
-                                     debrid_client.is_available()) else "❌ Not Available"
+    debrid_status = "✅ Available" if (CLIENTS_INITIALIZED and debrid_client and debrid_client.is_available()) else "❌ Not Available"
     
     menu_items = [
         ('🔍 Test TMDB Connection', 'test_tmdb', 'Test connection to TMDB API'),
@@ -904,8 +854,9 @@ def debug_info():
         
         if CLIENTS_INITIALIZED:
             info.append(f"=== Enhanced Clients ===")
-            coco_status = '✅ Available' if (cocoscrapers_client and hasattr(cocoscrapers_client, 'is_available') and cocoscrapers_client.is_available()) else '❌ Not Available'
-            debrid_status = '✅ Available' if (debrid_client and hasattr(debrid_client, 'is_available') and debrid_client.is_available()) else '❌ Not Available'
+            coco_available = cocoscrapers_client and cocoscrapers_client.is_available()
+            coco_status = '✅ Available' if coco_available else '❌ Not Available'
+            debrid_status = '✅ Available' if (debrid_client and debrid_client.is_available()) else '❌ Not Available'
             
             info.append(f"Cocoscrapers: {coco_status}")
             info.append(f"Debrid Services: {debrid_status}")
@@ -914,22 +865,24 @@ def debug_info():
             info.append(f"")
             
             # Cocoscrapers detailed info
-            if cocoscrapers_client and hasattr(cocoscrapers_client, 'is_available') and cocoscrapers_client.is_available():
+            if coco_available:
                 try:
                     if hasattr(cocoscrapers_client, 'get_scraper_stats'):
                         stats = cocoscrapers_client.get_scraper_stats()
                         info.append(f"=== Cocoscrapers Details ===")
                         info.append(f"Total Scrapers: {stats.get('total_scrapers', 'Unknown')}")
                         info.append(f"Enabled Scrapers: {stats.get('enabled_scrapers', 'Unknown')}")
+                        info.append(f"Version: {stats.get('version', 'Unknown')}")
                         info.append(f"")
-                except:
-                    info.append(f"Cocoscrapers: Stats unavailable")
+                except Exception as e:
+                    info.append(f"Cocoscrapers: Stats error - {str(e)}")
                     info.append(f"")
         
         info.append(f"=== Settings ===")
         info.append(f"Enable Cocoscrapers: {addon.getSettingBool('enable_cocoscrapers')}")
         info.append(f"Auto Play Best: {addon.getSettingBool('auto_play_best_source')}")
         info.append(f"Scraper Timeout: {addon.getSetting('scraper_timeout')}s")
+        info.append(f"Max Sources: {addon.getSetting('max_sources')}")
         info.append(f"TMDB API Key: {'✅ Set' if addon.getSetting('tmdb_api_key') else '❌ Not Set (using default)'}")
         github_url = addon.getSetting('github_repo_url')
         info.append(f"GitHub URL: {'✅ Set' if github_url else '❌ Not Set (using default)'}")
@@ -942,8 +895,9 @@ def debug_info():
             info.append(f"❌ Import Issues: Check if client files exist in resources/lib/")
         if not CLIENTS_INITIALIZED and IMPORTS_SUCCESS:
             info.append(f"❌ Enhanced Client Issues: Check Kodi log for specific errors")
-        if not cocoscrapers_client or not hasattr(cocoscrapers_client, 'is_available'):
+        if not cocoscrapers_client or not cocoscrapers_client.is_available():
             info.append(f"❌ Install script.module.cocoscrapers for enhanced features")
+            info.append(f"❌ Also install script.module.resolveurl for URL resolution")
         
         debug_message = '\n'.join(info)
         xbmcgui.Dialog().textviewer('MovieStream Pro - Debug Information', debug_message)
@@ -953,17 +907,21 @@ def debug_info():
         xbmcgui.Dialog().ok('Debug Error', f'Error collecting debug info: {str(e)}')
 
 def test_cocoscrapers():
-    """Test Cocoscrapers functionality with a sample movie"""
+    """Test Enhanced Cocoscrapers functionality with a sample movie"""
     try:
         if not CLIENTS_INITIALIZED or not cocoscrapers_client:
-            xbmcgui.Dialog().ok('Test Error', 'Cocoscrapers client not available')
+            xbmcgui.Dialog().ok('Test Error', 'Enhanced clients not available.\n\nPlease check:\n• script.module.cocoscrapers is installed\n• Cocoscrapers is enabled in settings\n• Check Tools > Debug Info for details')
+            return
+        
+        if not cocoscrapers_client.is_available():
+            xbmcgui.Dialog().ok('Test Error', 'Cocoscrapers not available.\n\nPlease install:\n• script.module.cocoscrapers\n• script.module.resolveurl\n\nRestart Kodi after installation.')
             return
         
         # Create progress dialog
         progress = xbmcgui.DialogProgress()
-        progress.create('Testing Cocoscrapers', 'Initializing test...')
+        progress.create('Testing Enhanced Cocoscrapers', 'Initializing test...')
         
-        # Test movie data
+        # Test movie data - using a popular movie for better results
         test_movie = {
             'title': 'The Avengers',
             'year': '2012',
@@ -972,32 +930,25 @@ def test_cocoscrapers():
         }
         
         progress.update(25, f"Testing with: {test_movie['title']} ({test_movie['year']})")
-        xbmc.log(f"MovieStream: Testing Cocoscrapers with {test_movie['title']}", xbmc.LOGINFO)
-        
-        # Test scraping
-        sources = []
+        xbmc.log(f"MovieStream: Testing Enhanced Cocoscrapers with {test_movie['title']}", xbmc.LOGINFO)
         
         try:
-            progress.update(50, 'Testing scrape_movie_sources...')
+            progress.update(50, 'Scraping sources...')
             
-            if hasattr(cocoscrapers_client, 'scrape_movie_sources'):
-                sources = cocoscrapers_client.scrape_movie_sources(
-                    title=test_movie['title'],
-                    year=test_movie['year'],
-                    tmdb_id=test_movie['tmdb_id'],
-                    imdb_id=test_movie['imdb_id']
-                )
-            elif hasattr(cocoscrapers_client, 'scrape_sources'):
-                sources = cocoscrapers_client.scrape_sources(test_movie, 'movie')
-            elif hasattr(cocoscrapers_client, 'get_sources'):
-                sources = cocoscrapers_client.get_sources(test_movie)
+            # Use the enhanced cocoscrapers client
+            sources = cocoscrapers_client.scrape_movie_sources(
+                title=test_movie['title'],
+                year=test_movie['year'],
+                tmdb_id=test_movie['tmdb_id'],
+                imdb_id=test_movie['imdb_id']
+            )
             
             progress.update(75, f'Found {len(sources) if sources else 0} sources')
             
         except Exception as e:
             progress.close()
-            xbmc.log(f"MovieStream: Cocoscrapers test error: {str(e)}", xbmc.LOGERROR)
-            xbmcgui.Dialog().ok('Test Failed', f'Scraping failed:\n{str(e)}')
+            xbmc.log(f"MovieStream: Enhanced Cocoscrapers test error: {str(e)}", xbmc.LOGERROR)
+            xbmcgui.Dialog().ok('Test Failed', f'Enhanced Cocoscrapers test failed:\n\n{str(e)}\n\nCheck Kodi log for more details.')
             return
         
         progress.update(100, 'Test complete')
@@ -1005,7 +956,7 @@ def test_cocoscrapers():
         
         # Show results
         if sources and len(sources) > 0:
-            message = f"✅ Cocoscrapers Test Successful!\n\n"
+            message = f"✅ Enhanced Cocoscrapers Test Successful!\n\n"
             message += f"Movie: {test_movie['title']} ({test_movie['year']})\n"
             message += f"Sources found: {len(sources)}\n\n"
             
@@ -1020,19 +971,38 @@ def test_cocoscrapers():
                     message += f"{i+1}. {str(source)[:30]}...\n"
             
             if len(sources) > 3:
-                message += f"... and {len(sources) - 3} more"
+                message += f"... and {len(sources) - 3} more sources"
+            
+            message += "\n\nCocoscrapers is working correctly!"
             
             xbmcgui.Dialog().ok('Test Results', message)
+            
+            # Ask if user wants to test playback with first source
+            if xbmcgui.Dialog().yesno('Test Playback', 'Test successful! Would you like to test playback with the first source?'):
+                try:
+                    if sources[0]:
+                        resolved_url = cocoscrapers_client.resolve_source(sources[0])
+                        if resolved_url:
+                            test_movie['video_url'] = resolved_url
+                            play_movie(json.dumps(test_movie))
+                        else:
+                            xbmcgui.Dialog().ok('Playback Test', 'Failed to resolve source URL.')
+                except Exception as e:
+                    xbmcgui.Dialog().ok('Playback Test', f'Playback test failed:\n{str(e)}')
         else:
-            message = "⚠️ Cocoscrapers Test Completed\n\n"
+            message = "⚠️ Enhanced Cocoscrapers Test Completed\n\n"
             message += f"Movie: {test_movie['title']} ({test_movie['year']})\n"
             message += "No sources found\n\n"
-            message += "This could be normal - try a different movie or check scrapers."
+            message += "This could be normal if:\n"
+            message += "• No scrapers are working currently\n"
+            message += "• Network connectivity issues\n"
+            message += "• Cocoscrapers settings need adjustment\n\n"
+            message += "Try a different movie or check scraper settings."
             
             xbmcgui.Dialog().ok('Test Results', message)
             
     except Exception as e:
-        xbmc.log(f"MovieStream: Cocoscrapers test error: {str(e)}", xbmc.LOGERROR)
+        xbmc.log(f"MovieStream: Enhanced Cocoscrapers test error: {str(e)}", xbmc.LOGERROR)
         xbmcgui.Dialog().ok('Test Error', f'Test failed: {str(e)}')
 
 def test_movie_playback():
@@ -1057,10 +1027,10 @@ def test_movie_playback():
         xbmcgui.Dialog().ok('Test Error', f'Test failed: {str(e)}')
 
 def cocoscrapers_status():
-    """Show detailed Cocoscrapers status"""
+    """Show detailed Enhanced Cocoscrapers status"""
     try:
         info = []
-        info.append("=== Cocoscrapers Debug Info ===\n")
+        info.append("=== Enhanced Cocoscrapers Debug Info ===\n")
         
         # Check basic availability
         info.append(f"CLIENTS_INITIALIZED: {CLIENTS_INITIALIZED}")
@@ -1069,12 +1039,13 @@ def cocoscrapers_status():
         info.append(f"Enable Cocoscrapers setting: {addon.getSettingBool('enable_cocoscrapers')}")
         
         if cocoscrapers_client:
-            info.append("\n=== Cocoscrapers Client Methods ===")
+            info.append(f"Cocoscrapers is_available(): {cocoscrapers_client.is_available()}")
+            info.append("\n=== Enhanced Cocoscrapers Client Methods ===")
+            
             methods = [
                 'is_available',
                 'scrape_movie_sources', 
-                'scrape_sources',
-                'get_sources',
+                'scrape_episode_sources',
                 'resolve_source',
                 'show_source_selection',
                 'get_scraper_stats'
@@ -1084,28 +1055,28 @@ def cocoscrapers_status():
                 has_method = hasattr(cocoscrapers_client, method)
                 info.append(f"{method}: {'✅ Available' if has_method else '❌ Missing'}")
             
-            # Test is_available if it exists
-            if hasattr(cocoscrapers_client, 'is_available'):
-                try:
-                    is_avail = cocoscrapers_client.is_available()
-                    info.append(f"\nis_available() result: {is_avail}")
-                except Exception as e:
-                    info.append(f"\nis_available() error: {str(e)}")
-            
             # Test scraper stats if available
             if hasattr(cocoscrapers_client, 'get_scraper_stats'):
                 try:
                     stats = cocoscrapers_client.get_scraper_stats()
                     info.append(f"\n=== Scraper Stats ===")
-                    info.append(f"Stats: {stats}")
+                    for key, value in stats.items():
+                        info.append(f"{key}: {value}")
                 except Exception as e:
                     info.append(f"\nScraper stats error: {str(e)}")
         else:
-            info.append("\n❌ Cocoscrapers client is None")
+            info.append("\n❌ Enhanced Cocoscrapers client is None")
             info.append("\nPossible issues:")
             info.append("• script.module.cocoscrapers not installed")
             info.append("• Import error during initialization") 
-            info.append("• Cocoscrapers client initialization failed")
+            info.append("• Enhanced Cocoscrapers client initialization failed")
+        
+        # Installation instructions
+        info.append(f"\n=== Installation Requirements ===")
+        info.append(f"Required Kodi addons:")
+        info.append(f"• script.module.cocoscrapers")
+        info.append(f"• script.module.resolveurl (optional but recommended)")
+        info.append(f"\nAfter installing, restart Kodi and test again.")
         
         # Settings info
         info.append(f"\n=== Settings ===")
@@ -1117,7 +1088,7 @@ def cocoscrapers_status():
         debug_text = '\n'.join(info)
         
         # Show in text viewer for better readability
-        xbmcgui.Dialog().textviewer('Cocoscrapers Debug Info', debug_text)
+        xbmcgui.Dialog().textviewer('Enhanced Cocoscrapers Debug Info', debug_text)
         
     except Exception as e:
         xbmc.log(f"MovieStream: Cocoscrapers status error: {str(e)}", xbmc.LOGERROR)
@@ -1126,7 +1097,7 @@ def cocoscrapers_status():
 def debrid_status():
     """Show debrid services status"""
     try:
-        if not CLIENTS_INITIALIZED or not debrid_client or not hasattr(debrid_client, 'is_available') or not debrid_client.is_available():
+        if not CLIENTS_INITIALIZED or not debrid_client or not debrid_client.is_available():
             message = "❌ No Debrid Services Configured\n\n"
             message += "Available services:\n"
             message += "• Real-Debrid\n"
@@ -1247,7 +1218,7 @@ def addon_info():
     addon_name = addon.getAddonInfo('name')
     addon_author = addon.getAddonInfo('author')
     
-    message = f"{addon_name} v{addon_version}\n\nDeveloped by: {addon_author}\n\nFeatures:\n• TMDB Integration\n• GitHub Database\n• Cocoscrapers Support\n• Multiple Video Sources\n• Subtitle Support\n• Search Functionality"
+    message = f"{addon_name} v{addon_version}\n\nDeveloped by: {addon_author}\n\nFeatures:\n• Enhanced Cocoscrapers Integration\n• TMDB Integration\n• GitHub Database\n• Multiple Video Sources\n• Debrid Services Support\n• Watchlist & History\n• Advanced Tools & Debugging"
     
     xbmcgui.Dialog().ok('Addon Information', message)
 
@@ -1325,7 +1296,7 @@ def router(paramstring):
 if __name__ == '__main__':
     # Main entry point
     try:
-        xbmc.log("MovieStream: Plugin started", xbmc.LOGINFO)
+        xbmc.log("MovieStream: Enhanced Plugin started", xbmc.LOGINFO)
         xbmc.log(f"MovieStream: Arguments: {sys.argv}", xbmc.LOGINFO)
         
         # Get paramstring from argv[2]
@@ -1336,7 +1307,7 @@ if __name__ == '__main__':
         # Route to appropriate function
         router(paramstring)
         
-        xbmc.log("MovieStream: Plugin execution completed", xbmc.LOGINFO)
+        xbmc.log("MovieStream: Enhanced Plugin execution completed", xbmc.LOGINFO)
         
     except Exception as e:
         xbmc.log(f"MovieStream: Critical plugin error: {str(e)}", xbmc.LOGERROR)
