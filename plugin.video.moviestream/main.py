@@ -17,7 +17,7 @@ import xbmcvfs
 import requests
 import json
 
-# Import our enhanced modules
+# Import our enhanced modules with robust error handling
 try:
     from resources.lib.cocoscrapers_client import CocoScrapersClient
     from resources.lib.debrid_client import DebridClient
@@ -30,6 +30,7 @@ try:
     from resources.lib.subtitle_client import SubtitleClient
     from resources.lib.streaming_providers import StreamingProviders
     IMPORTS_SUCCESS = True
+    xbmc.log("MovieStream: All modules imported successfully", xbmc.LOGINFO)
 except Exception as e:
     xbmc.log(f"MovieStream: Import error: {str(e)}", xbmc.LOGERROR)
     IMPORTS_SUCCESS = False
