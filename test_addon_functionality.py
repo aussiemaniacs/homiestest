@@ -52,6 +52,11 @@ class MockXBMCAddon:
     def openSettings(self):
         print("Settings opened")
 
+# Create a mock module with Addon class
+class MockXBMCAddonModule:
+    def Addon(self):
+        return MockXBMCAddon()
+
 class MockXBMCPlugin:
     @staticmethod
     def setPluginCategory(handle, category):
