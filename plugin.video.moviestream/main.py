@@ -4,7 +4,7 @@
 """
 MovieStream Pro - Complete Kodi Addon with Cocoscrapers Integration
 Features: TMDB, GitHub, Cocoscrapers, Debrid Services, TV Shows, Watchlist, Favorites
-Version: 2.0.0
+Version: 2.0.0 - FIXED CLIENT INITIALIZATION
 """
 
 import sys
