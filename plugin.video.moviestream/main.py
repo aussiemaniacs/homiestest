@@ -975,35 +975,65 @@ def test_movie_playback():
 def cocoscrapers_status():
     """Show detailed Cocoscrapers status"""
     try:
-        if not CLIENTS_INITIALIZED:
-            message = "❌ Enhanced Clients Not Initialized\n\n"
-            message += "The addon failed to initialize enhanced features.\n"
-            message += "Running in basic mode only.\n"
-            message += "Check Tools > Debug Info for details."
-        elif cocoscrapers_client and hasattr(cocoscrapers_client, 'is_available') and cocoscrapers_client.is_available():
-            message = f"✅ Cocoscrapers Available\n\n"
-            try:
-                if hasattr(cocoscrapers_client, 'get_scraper_stats'):
-                    stats = cocoscrapers_client.get_scraper_stats()
-                    message += f"Total Scrapers: {stats.get('total_scrapers', 'Unknown')}\n"
-                    message += f"Enabled Scrapers: {stats.get('enabled_scrapers', 'Unknown')}\n"
-                else:
-                    message += "Scraper stats not available\n"
-            except:
-                message += "Error getting scraper stats\n"
-            
-            message += f"Timeout Setting: {addon.getSetting('scraper_timeout')}s\n"
-            message += f"Max Sources: {addon.getSetting('max_sources')}\n\n"
-            message += "Cocoscrapers is ready to find streaming sources."
-        else:
-            message = "❌ Cocoscrapers Not Available\n\n"
-            message += "To use Cocoscrapers:\n"
-            message += "1. Install 'script.module.cocoscrapers' addon\n"
-            message += "2. Install 'script.module.resolveurl' addon (optional)\n"
-            message += "3. Restart Kodi or MovieStream addon\n\n"
-            message += "Without Cocoscrapers, only GitHub collection and sample videos will play."
+        info = []
+        info.append("=== Cocoscrapers Debug Info ===\n")
         
-        xbmcgui.Dialog().ok('Cocoscrapers Status', message)
+        # Check basic availability
+        info.append(f"CLIENTS_INITIALIZED: {CLIENTS_INITIALIZED}")
+        info.append(f"IMPORTS_SUCCESS: {IMPORTS_SUCCESS}")
+        info.append(f"Cocoscrapers client exists: {cocoscrapers_client is not None}")
+        info.append(f"Enable Cocoscrapers setting: {addon.getSettingBool('enable_cocoscrapers')}")
+        
+        if cocoscrapers_client:
+            info.append("\n=== Cocoscrapers Client Methods ===")
+            methods = [
+                'is_available',
+                'scrape_movie_sources', 
+                'scrape_sources',
+                'get_sources',
+                'resolve_source',
+                'show_source_selection',
+                'get_scraper_stats'
+            ]
+            
+            for method in methods:
+                has_method = hasattr(cocoscrapers_client, method)
+                info.append(f"{method}: {'✅ Available' if has_method else '❌ Missing'}")
+            
+            # Test is_available if it exists
+            if hasattr(cocoscrapers_client, 'is_available'):
+                try:
+                    is_avail = cocoscrapers_client.is_available()
+                    info.append(f"\nis_available() result: {is_avail}")
+                except Exception as e:
+                    info.append(f"\nis_available() error: {str(e)}")
+            
+            # Test scraper stats if available
+            if hasattr(cocoscrapers_client, 'get_scraper_stats'):
+                try:
+                    stats = cocoscrapers_client.get_scraper_stats()
+                    info.append(f"\n=== Scraper Stats ===")
+                    info.append(f"Stats: {stats}")
+                except Exception as e:
+                    info.append(f"\nScraper stats error: {str(e)}")
+        else:
+            info.append("\n❌ Cocoscrapers client is None")
+            info.append("\nPossible issues:")
+            info.append("• script.module.cocoscrapers not installed")
+            info.append("• Import error during initialization") 
+            info.append("• Cocoscrapers client initialization failed")
+        
+        # Settings info
+        info.append(f"\n=== Settings ===")
+        info.append(f"Enable Cocoscrapers: {addon.getSettingBool('enable_cocoscrapers')}")
+        info.append(f"Auto Play Best: {addon.getSettingBool('auto_play_best_source')}")
+        info.append(f"Scraper Timeout: {addon.getSetting('scraper_timeout')}s")
+        info.append(f"Max Sources: {addon.getSetting('max_sources')}")
+        
+        debug_text = '\n'.join(info)
+        
+        # Show in text viewer for better readability
+        xbmcgui.Dialog().textviewer('Cocoscrapers Debug Info', debug_text)
         
     except Exception as e:
         xbmc.log(f"MovieStream: Cocoscrapers status error: {str(e)}", xbmc.LOGERROR)
